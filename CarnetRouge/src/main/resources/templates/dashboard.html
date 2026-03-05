@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarnetRouge - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/output.css}">
+</head>
+
+<body class="bg-base-200 min-h-screen">
+
+<!-- Navbar -->
+<div class="navbar bg-base-100 shadow-lg px-6">
+    <div class="flex-1">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-red-700 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                     fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+                </svg>
+            </div>
+            <span class="text-xl font-bold text-red-500">CarnetRouge</span>
+        </div>
+    </div>
+
+    <div class="flex-none gap-3">
+
+        <!-- Nom de l'utilisateur connecté -->
+        <span class="text-sm text-base-content/70" sec:authentication="name"></span>
+
+        <!-- Badge rôle -->
+        <div sec:authorize="hasRole('ADMIN')" class="badge badge-error">Admin</div>
+        <div sec:authorize="hasRole('ENSEIGNANT')" class="badge badge-warning">Enseignant</div>
+        <div sec:authorize="hasRole('ETUDIANT')" class="badge badge-info">Étudiant</div>
+
+        <!-- Bouton déconnexion -->
+        <a th:href="@{/logout}" class="btn btn-sm bg-red-700 hover:bg-red-600 text-white border-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Déconnexion
+        </a>
+    </div>
+</div>
+
+<!-- Contenu principal -->
+<div class="container mx-auto p-6">
+
+    <!-- Message de bienvenue -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold">
+            Bonjour, <span class="text-red-500" sec:authentication="principal.nom">Utilisateur</span> 👋
+        </h1>
+        <p class="text-base-content/60 mt-1">Bienvenue sur votre tableau de bord.</p>
+    </div>
+
+    <!-- Cards selon le rôle -->
+
+    <!-- ADMIN -->
+    <div sec:authorize="hasRole('ADMIN')" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-red-400">👥 Utilisateurs</h2>
+                <p class="text-base-content/60">Gérer les enseignants et étudiants</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/admin/utilisateurs}" class="btn btn-sm bg-red-700 text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-red-400">🎓 Rôles & Permissions</h2>
+                <p class="text-base-content/60">Configurer les accès</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/admin/roles}" class="btn btn-sm bg-red-700 text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card bg-base-100  shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-red-400">📊 Statistiques</h2>
+                <p class="text-base-content/60">Vue globale de l'application</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/admin/stats}" class="btn btn-sm bg-red-700 text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENSEIGNANT -->
+    <div sec:authorize="hasRole('ENSEIGNANT')" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-yellow-400">📝 Mes notes</h2>
+                <p class="text-base-content/60">Saisir et gérer les notes</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/enseignant/notes}" class="btn btn-sm btn-warning text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-yellow-400">👨‍🎓 Mes étudiants</h2>
+                <p class="text-base-content/60">Consulter la liste de vos étudiants</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/enseignant/etudiants}" class="btn btn-sm btn-warning text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETUDIANT -->
+    <div sec:authorize="hasRole('ETUDIANT')" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-info">📋 Mes résultats</h2>
+                <p class="text-base-content/60">Consulter vos notes et résultats</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/etudiant/resultats}" class="btn btn-sm btn-info text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-info">📅 Mon emploi du temps</h2>
+                <p class="text-base-content/60">Voir votre planning</p>
+                <div class="card-actions justify-end mt-2">
+                    <a th:href="@{/etudiant/planning}" class="btn btn-sm btn-info text-white border-none">
+                        Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Infos du compte (tous les rôles) -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-base-content/80 mb-2">🔐 Mon compte</h2>
+            <div class="flex flex-wrap gap-4 text-sm">
+                <div class="badge badge-outline gap-1">
+                    Email : <span sec:authentication="name"></span>
+                </div>
+                <div class="badge badge-outline gap-1">
+                    Rôles : <span sec:authentication="principal.authorities"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

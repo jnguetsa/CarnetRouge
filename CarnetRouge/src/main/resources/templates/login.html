@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarnetRouge - Connexion</title>
+    <link rel="stylesheet" th:href="@{/css/output.css}">
+</head>
+
+<body class="bg-base-200 min-h-screen flex items-center justify-center p-4">
+
+<div class="card w-full max-w-md shadow-2xl bg-base-100">
+    <div class="card-body gap-4">
+
+        <!-- Logo / Titre -->
+        <div class="flex flex-col items-center mb-2">
+            <div class="w-16 h-16 bg-red-700 rounded-full flex items-center justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                     fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-red-500">CarnetRouge</h1>
+            <p class="text-sm text-base-content/60 mt-1">Connectez-vous à votre espace</p>
+        </div>
+
+        <!-- Alerte erreur -->
+        <div th:if="${param.error}" class="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Email ou mot de passe incorrect.</span>
+        </div>
+
+        <!-- Alerte token expiré -->
+        <div th:if="${param.expired}" class="alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+            </svg>
+            <span>Votre session a expiré. Veuillez vous reconnecter.</span>
+        </div>
+
+        <!-- Alerte déconnexion -->
+        <div th:if="${param.logout}" class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Vous avez été déconnecté avec succès.</span>
+        </div>
+
+        <!-- Formulaire -->
+        <form th:action="@{/login}" method="post" class="space-y-4">
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Adresse email</span>
+                </label>
+                <input type="email"
+                       name="username"
+                       placeholder="votre@email.com"
+                       class="input input-bordered w-full"
+                       required autofocus/>
+            </div>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Mot de passe</span>
+                </label>
+                <input type="password"
+                       name="password"
+                       placeholder="••••••••"
+                       class="input input-bordered w-full"
+                       required/>
+            </div>
+
+            <div class="form-control mt-4">
+                <button type="submit" class="btn bg-red-700 hover:bg-red-600 text-white border-none w-full">
+                    Se connecter
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+</body>
+</html>
