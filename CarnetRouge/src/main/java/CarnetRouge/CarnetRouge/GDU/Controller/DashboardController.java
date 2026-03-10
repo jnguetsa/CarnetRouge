@@ -2,6 +2,7 @@ package CarnetRouge.CarnetRouge.GDU.Controller;
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.UtilisateursDTO;
 import CarnetRouge.CarnetRouge.GDU.Entity.Utilisateurs;
+import CarnetRouge.CarnetRouge.GDU.Exception.UserNotFoundException;
 import CarnetRouge.CarnetRouge.GDU.Mappers.UtilisateurMapper;
 import CarnetRouge.CarnetRouge.GDU.Repository.UtilisateurRepository;
 import CarnetRouge.CarnetRouge.GDU.Services.ServiceImpl.AdminServiceImpl;
@@ -12,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class DashboardController {
@@ -30,9 +32,21 @@ public class DashboardController {
         return "dashboard";
     }
 
+//    @PostMapping("/admin/utilisateurs/supprimer")
+//    public String supprimerUtilisateur(@RequestParam Long id) {
+//        adminServiceImpl.deleteUtilisateur(id);
+//        return "redirect:/admin/utilisateurs";
+//    }
+
     @PostMapping("/admin/utilisateurs/supprimer")
-    public String supprimerUtilisateur(@RequestParam Long id) {
-        adminServiceImpl.deleteUtilisateur(id);
+    public String supprimerUtilisateur(@RequestParam Long id,
+                                       RedirectAttributes redirectAttributes) {
+        try {
+            adminServiceImpl.deleteUtilisateur(id);
+            redirectAttributes.addFlashAttribute("success", "Utilisateur supprimé avec succès.");
+        } catch (UserNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin/utilisateurs";
     }
 

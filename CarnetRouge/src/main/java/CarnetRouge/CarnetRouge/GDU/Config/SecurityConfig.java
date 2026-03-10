@@ -1,5 +1,6 @@
 package CarnetRouge.CarnetRouge.GDU.Config;
 
+import CarnetRouge.CarnetRouge.GDU.Services.ServiceImpl.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -26,7 +29,7 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final UserDetailsService userDetailsService;
-
+    private  final RefreshTokenService  refreshTokenService;
     // Liste des URLs accessibles sans authentification
     private static final String[] PUBLIC_URL = {
             "/login",
@@ -59,17 +62,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendRedirect("/login")
                         )
                         .accessDeniedPage("/notFound")
                 )
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_URL).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -77,13 +77,25 @@ public class SecurityConfig {
                         .requestMatchers("/etudiant/**").hasRole("ETUDIANT")
                         .anyRequest().authenticated()
                 )
-
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .deleteCookies("JWT_TOKEN", "REFRESH_TOKEN")
+                        .addLogoutHandler((request, response, authentication) -> {
+                            // Supprime le refresh token en base
+                            if (request.getCookies() != null) {
+                                Arrays.stream(request.getCookies())
+                                        .filter(c -> "REFRESH_TOKEN".equals(c.getName()))
+                                        .findFirst()
+                                        .ifPresent(c -> {
+                                            try {
+                                                refreshTokenService.deleteByToken(c.getValue());
+                                            } catch (Exception ignored) {}
+                                        });
+                            }
+                        })
+                        .deleteCookies("JWT_TOKEN", "REFRESH_TOKEN") // ← Spring gère la suppression
                         .logoutSuccessUrl("/login?logout=true")
+                        .permitAll()
                 )
-
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
