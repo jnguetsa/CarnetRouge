@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CarnetRouge — Gestion Utilisateurs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" th:href="@{/css/user.css}">
+
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+    <a th:href="@{/dashboard}" class="nav-brand">
+        <div class="nav-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+            </svg>
+        </div>
+        <span class="nav-title">Carnet<span>Rouge</span></span>
+    </a>
+
+    <div class="nav-right">
+        <div class="nav-user">
+            <div class="nav-avatar">A</div>
+            <span sec:authentication="name">Admin</span>
+        </div>
+        <span class="badge-admin">Admin</span>
+        <a th:href="@{/logout}" class="btn-logout">
+            <i class="bi bi-box-arrow-right"></i> Déconnexion
+        </a>
+    </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Personnel <span>Enseignant</span><br>&amp; Assistant</h1>
+            <p class="page-sub">Gérez les accès et les informations du personnel académique.</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <div class="stat-label">Total Utilisateurs</div>
+                <div class="stat-value" th:text="${utilisateurs.totalElements}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="filter-card">
+        <!-- On retire action="#" et le champ hidden page=0 pour un comportement natif correct -->
+        <form th:action="@{/admin/utilisateurs}" method="get">
+            <div class="filter-grid">
+                <!-- Search -->
+                <div>
+                    <label class="filter-label">Recherche</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-search"></i>
+                        <input
+                                type="text" name="recherche" th:value="${recherche ?: param.recherche ?: ''}"
+                                placeholder="Nom, email, grade…"
+                                class="input-field"
+                        />
+                    </div>
+                </div>
+
+                <!-- Type -->
+                <div>
+                    <label class="filter-label">Type d'utilisateur</label>
+                    <div style="position:relative;">
+                        <select name="type" class="select-field" style="padding-left:14px; min-width:200px;">
+                            <option value="TOUS" th:selected="${(typeSelectionne ?: param.type) == 'TOUS' or (typeSelectionne == null and param.type == null)}">Tous les types</option>
+                            <option value="ENS"  th:selected="${(typeSelectionne ?: param.type) == 'ENS'}">Enseignants</option>
+                            <option value="ASS"  th:selected="${(typeSelectionne ?: param.type) == 'ASS'}">Assistants</option>
+                        </select>
+                        <i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;font-size:0.75rem;"></i>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div>
+                    <label class="filter-label">&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="bi bi-funnel-fill"></i> Filtrer
+                        </button>
+                        <a th:href="@{/admin/utilisateurs}" class="btn-ghost" title="Réinitialiser">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <span class="table-title">Liste du Personnel</span>
+            <span class="table-count" th:text="${utilisateurs.totalElements + ' résultats'}">0 résultats</span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Contact</th>
+                    <th style="text-align:center;">Type</th>
+                    <th class="th-specs">Spécifications</th>
+                    <th>Statut</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                <!-- THYMELEAF LOOP — th:each -->
+                <tr th:each="u : ${utilisateurs.content}">
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar" th:text="${#strings.substring(u.nom,0,1)}">U</div>
+                            <div>
+                                <div class="user-name" th:text="${u.nom + ' ' + u.prenom}">Nom Prenom</div>
+                                <div class="user-id" th:text="${'#' + u.id}">#000</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="email-cell" th:text="${u.email}">email@test.com</td>
+                    <td style="text-align:center;">
+                        <span th:if="${u.type == 'ENS'}" class="badge badge-ens"><i class="bi bi-mortarboard-fill"></i> ENS</span>
+                        <span th:if="${u.type == 'ASS'}" class="badge badge-ass"><i class="bi bi-person-workspace"></i> ASS</span>
+                    </td>
+                    <td class="specs-cell td-specs">
+                        <div th:if="${u.type == 'ENS'}">
+                            <div class="spec-row"><span class="spec-key">Grade</span><span class="spec-val" th:text="${u.grade}"></span></div>
+                            <div class="spec-row"><span class="spec-key">Cat.</span><span class="spec-val" th:text="${u.typeEnseignant}"></span></div>
+                        </div>
+                        <div th:if="${u.type == 'ASS'}">
+                            <div class="spec-row"><span class="spec-key">Fonct.</span><span class="spec-val" th:text="${u.fonction}"></span></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div th:if="${u.active}" class="status status-active">
+                            <span class="status-dot"></span> Actif
+                        </div>
+                        <div th:unless="${u.active}" class="status status-inactive">
+                            <span class="status-dot"></span> Inactif
+                        </div>
+                    </td>
+                    <td>
+                        <div class="actions-cell">
+                            <a th:href="@{supprimerUtilisateur(id=${u.id})}"  class="action-btn action-edit" title="Modifier"><i class="bi bi-pencil-square"></i></a>
+                            <button class="action-btn action-delete"
+                                    title="Supprimer">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination Thymeleaf avec gestion robuste anti-null et paramètre Fallback -->
+    <div th:if="${utilisateurs.totalPages > 1}" class="pagination">
+        <!-- Bouton précédent -->
+        <a th:if="${utilisateurs.hasPrevious()}"
+           th:href="@{/admin/utilisateurs(page=${utilisateurs.number - 1}, recherche=${recherche ?: param.recherche}, type=${typeSelectionne ?: param.type})}"
+           class="page-btn" title="Page précédente">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+
+        <!-- Numéros de pages sécurisé -->
+        <a th:each="i : ${#numbers.sequence(0, utilisateurs.totalPages > 0 ? utilisateurs.totalPages - 1 : 0)}"
+           th:href="@{/admin/utilisateurs(page=${i}, recherche=${recherche ?: param.recherche}, type=${typeSelectionne ?: param.type})}"
+           th:text="${i + 1}"
+           class="page-btn"
+           th:classappend="${i == utilisateurs.number} ? 'active' : ''">
+        </a>
+
+        <!-- Bouton suivant -->
+        <a th:if="${utilisateurs.hasNext()}"
+           th:href="@{/admin/utilisateurs(page=${utilisateurs.number + 1}, recherche=${recherche ?: param.recherche}, type=${typeSelectionne ?: param.type})}"
+           class="page-btn" title="Page suivante">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+
+</main>
+</body>
+</html>

@@ -13,7 +13,18 @@ server:
 spring:
   application:
     name: CarnetRouge
-
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: juniornoumedem02@gmail.com
+    password: zhlnxiziflgkjgfy    # Ton "Mot de passe d'application" Google
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
   datasource:
     url: jdbc:postgresql://localhost:5432/carnetRouge
     username: postgres
@@ -52,3 +63,8 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.thymeleaf: DEBUG          # ou TRACE pour encore plus de détails
+    org.thymeleaf.spring6: DEBUG  # selon ta version de Spring Boot (6+)
+
+mailtrap:
+  token: ${f6da54d4e4f0540749acb1e0b6bca5f7}

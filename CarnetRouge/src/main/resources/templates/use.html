@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestion des Utilisateurs</title>
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --surface: #17171f;
+      --surface2: #1e1e2a;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent2: #f97316;
+      --muted: #6b6b80;
+      --emerald: #10b981;
+      --red: #ef4444;
+      --orange: #f97316;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      margin: 0;
+      padding: 0;
+    }
+
+    .font-display {
+      font-family: 'Arial Black', Gadget, sans-serif;
+      font-weight: bold;
+    }
+
+    /* Couleurs et surfaces */
+    .bg-bg { background-color: var(--bg); }
+    .bg-surface { background-color: var(--surface); }
+    .bg-surface2 { background-color: var(--surface2); }
+    .border-border { border-color: var(--border); }
+    .text-muted { color: var(--muted); }
+    .text-accent { color: var(--accent); }
+    .bg-accent { background-color: var(--accent); }
+    .bg-accent2 { background-color: var(--accent2); }
+    .bg-emerald { background-color: var(--emerald); }
+    .text-emerald { color: var(--emerald); }
+    .bg-orange { background-color: var(--orange); }
+    .text-orange { color: var(--orange); }
+    .text-red { color: var(--red); }
+
+    /* Layout */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-3 { gap: 0.75rem; }
+    .ml-64 { margin-left: 16rem; }
+    .p-9 { padding: 2.25rem; }
+    .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-full { border-radius: 9999px; }
+    .w-full { width: 100%; }
+    .min-h-screen { min-height: 100vh; }
+    .fixed { position: fixed; }
+    .top-0 { top: 0; }
+    .left-0 { left: 0; }
+    .z-50 { z-index: 50; }
+    .w-64 { width: 16rem; }
+    .w-8 { width: 2rem; }
+    .h-8 { height: 2rem; }
+    .w-9 { width: 2.25rem; }
+    .h-9 { height: 2.25rem; }
+    .w-12 { width: 3rem; }
+    .h-12 { height: 3rem; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .text-base { font-size: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .text-3xl { font-size: 1.875rem; }
+    .font-bold { font-weight: bold; }
+    .font-semibold { font-weight: 600; }
+    .font-medium { font-weight: 500; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-widest { letter-spacing: 0.1em; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .hover\:bg-surface2:hover { background-color: var(--surface2); }
+    .hover\:text-white:hover { color: white; }
+    .hover\:-translate-y-0\.5:hover { transform: translateY(-0.125rem); }
+    .transition-all { transition: all 0.2s ease; }
+    .opacity-30 { opacity: 0.3; }
+    .pointer-events-none { pointer-events: none; }
+    .border { border-width: 1px; }
+    .border-b { border-bottom-width: 1px; }
+    .overflow-hidden { overflow: hidden; }
+    .grid { display: grid; }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .gap-4 { gap: 1rem; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 16rem;
+      min-height: 100vh;
+      background-color: var(--surface);
+      border-right: 1px solid var(--border);
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background-color: var(--surface2);
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    tr:hover {
+      background-color: rgba(108, 99, 255, 0.1);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .badge-enseignant {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: rgba(16, 185, 129, 0.8);
+    }
+    .badge-assistant {
+      background-color: rgba(249, 115, 22, 0.1);
+      color: rgba(249, 115, 22, 0.8);
+    }
+    .badge-actif {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: rgba(16, 185, 129, 0.8);
+    }
+    .badge-inactif {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: rgba(239, 68, 68, 0.8);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      background-color: var(--surface2);
+      border-top: 1px solid var(--border);
+    }
+    .pagination a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      text-decoration: none;
+      color: var(--muted);
+      transition: all 0.2s ease;
+    }
+    .pagination a:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .pagination a.active {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .pagination a:disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="bg-bg text-white font-body min-h-screen flex">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar fixed top-0 left-0 flex flex-col z-50">
+  <!-- Logo -->
+  <div class="px-6 py-7 border-b border-border">
+    <div class="font-display text-2xl bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent tracking-tight">
+      CarnetRouge
+    </div>
+    <div class="text-muted text-xs tracking-widest uppercase mt-1">Administration</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-4">
+    <div class="px-6 mb-2 text-muted text-xs tracking-widest uppercase">Menu</div>
+    <a href="#" class="flex items-center gap-3 mx-3 px-4 py-3 rounded-xl text-muted text-sm font-medium hover:bg-surface2 hover:text-white transition-all">
+      <div class="w-8 h-8 bg-surface2 rounded-lg flex items-center justify-center text-sm">🏠</div>
+      Tableau de bord
+    </a>
+    <a href="#" class="flex items-center gap-3 mx-3 px-4 py-3 rounded-xl text-accent bg-accent/10 text-sm font-semibold font-display">
+      <div class="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center text-sm">👥</div>
+      Utilisateurs
+    </a>
+  </nav>
+
+  <!-- User -->
+  <div class="p-4 border-t border-border">
+    <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-surface2">
+      <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white font-display font-bold text-sm">A</div>
+      <div>
+        <div class="text-sm font-semibold text-white">Admin</div>
+        <div class="text-xs text-muted">admin@carnetrouge.com</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="ml-64 flex-1 p-9">
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-8">
+    <div>
+      <h1 class="font-display font-bold text-3xl text-white tracking-tight">Utilisateurs</h1>
+      <p class="text-muted text-sm mt-1">Gérez les enseignants et assistants de la plateforme</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="#" class="flex items-center gap-2 bg-emerald hover:bg-emerald text-white font-display font-semibold text-sm px-5 py-2.5 rounded-xl transition-all hover:-translate-y-0.5">
+        + Enseignant
+      </a>
+      <a href="#" class="flex items-center gap-2 bg-accent2 hover:bg-orange text-white font-display font-semibold text-sm px-5 py-2.5 rounded-xl transition-all hover:-translate-y-0.5">
+        + Assistant
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-4 mb-7">
+    <div class="bg-surface border border-border rounded-2xl p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center text-xl">👥</div>
+      <div>
+        <div class="font-display font-bold text-2xl text-white">0</div>
+        <div class="text-muted text-xs mt-0.5">Total utilisateurs</div>
+      </div>
+    </div>
+    <div class="bg-surface border border-border rounded-2xl p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-emerald/15 flex items-center justify-center text-xl">🎓</div>
+      <div>
+        <div class="font-display font-bold text-2xl text-white">--</div>
+        <div class="text-muted text-xs mt-0.5">Enseignants</div>
+      </div>
+    </div>
+    <div class="bg-surface border border-border rounded-2xl p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-orange/15 flex items-center justify-center text-xl">🗂️</div>
+      <div>
+        <div class="font-display font-bold text-2xl text-white">--</div>
+        <div class="text-muted text-xs mt-0.5">Assistants</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="bg-surface border border-border rounded-2xl px-5 py-4 flex items-center justify-between gap-4 mb-5 flex-wrap">
+    <!-- Filtres -->
+    <div class="flex gap-1.5 bg-surface2 p-1 rounded-xl">
+      <a href="#" class="px-4 py-1.5 rounded-lg text-xs font-display font-bold bg-accent text-white">Tous</a>
+      <a href="#" class="px-4 py-1.5 rounded-lg text-xs font-display font-bold text-muted hover:text-white transition-colors">Enseignants</a>
+      <a href="#" class="px-4 py-1.5 rounded-lg text-xs font-display font-bold text-muted hover:text-white transition-colors">Assistants</a>
+    </div>
+
+    <!-- Recherche -->
+    <form class="flex items-center gap-3 flex-1 max-w-md">
+      <div class="relative flex-1">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">🔍</span>
+        <input type="text" placeholder="Rechercher par nom ou prénom..."
+               class="w-full bg-surface2 border border-border rounded-xl pl-9 pr-4 py-2.5 text-white text-sm placeholder-muted outline-none focus:border-accent transition-colors"/>
+      </div>
+      <button type="submit" class="bg-accent hover:bg-indigo-500 text-white font-display font-semibold text-sm px-4 py-2.5 rounded-xl transition-all whitespace-nowrap">
+        Rechercher
+      </button>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-surface border border-border rounded-2xl overflow-hidden">
+    <table>
+      <thead class="bg-surface2">
+      <tr>
+        <th>Utilisateur</th>
+        <th>Téléphone</th>
+        <th>Type</th>
+        <th>Détail</th>
+        <th>Statut</th>
+        <th>Créé le</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- Exemple de ligne statique -->
+      <tr>
+        <td>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-display font-bold text-sm">
+              JD
+            </div>
+            <div>
+              <div class="text-white font-medium text-sm">Jean Dupont</div>
+              <div class="text-muted text-xs mt-0.5">jean.dupont@exemple.com</div>
+            </div>
+          </div>
+        </td>
+        <td class="text-muted text-sm">+237 690 000 000</td>
+        <td>
+          <span class="badge badge-enseignant">🎓 Enseignant</span>
+        </td>
+        <td class="text-muted text-sm">Professeur · Titulaire</td>
+        <td>
+                        <span class="badge badge-actif">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> Actif
+                        </span>
+        </td>
+        <td class="text-muted text-sm">15/06/2023</td>
+        <td>
+          <div class="flex items-center justify-end gap-1.5">
+            <a href="#" class="w-8 h-8 rounded-lg border border-border text-muted hover:border-accent hover:text-accent hover:bg-accent/10 flex items-center justify-center text-sm transition-all" title="Voir">👁</a>
+            <a href="#" class="w-8 h-8 rounded-lg border border-border text-muted hover:border-accent hover:text-accent hover:bg-accent/10 flex items-center justify-center text-sm transition-all" title="Modifier">✏️</a>
+            <a href="#" onclick="return confirm('Confirmer la suppression ?')" class="w-8 h-8 rounded-lg border border-border text-muted hover:border-red hover:text-red hover:bg-red/10 flex items-center justify-center text-sm transition-all" title="Supprimer">🗑</a>
+          </div>
+        </td>
+      </tr>
+      <!-- Ajoute d'autres lignes ici -->
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <div class="text-muted text-sm">
+        Page <span class="text-white font-semibold">1</span> sur <span class="text-white font-semibold">1</span>
+      </div>
+      <div class="flex gap-1">
+        <a href="#" class="opacity-30 pointer-events-none">←</a>
+        <a href="#" class="active">1</a>
+        <a href="#">→</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Script pour simuler des données dynamiques (optionnel) -->
+<script>
+  // Exemple : Remplacer les données statiques par des données dynamiques
+  document.addEventListener('DOMContentLoaded', function() {
+    const users = [
+      { nom: 'Jean Dupont', email: 'jean.dupont@exemple.com', telephone: '+237 690 000 000', type: 'Enseignant', detail: 'Professeur · Titulaire', statut: 'Actif', date: '15/06/2023' },
+      { nom: 'Marie Martin', email: 'marie.martin@exemple.com', telephone: '+237 690 000 001', type: 'Assistant', detail: 'Assistant de recherche', statut: 'Actif', date: '10/05/2023' },
+      { nom: 'Pierre Nguetsa', email: 'pierre.nguetsa@exemple.com', telephone: '+237 690 000 002', type: 'Enseignant', detail: 'Maître de conférences · Vacataire', statut: 'Inactif', date: '01/02/2023' },
+    ];
+
+    const tbody = document.querySelector('tbody');
+    tbody.innerHTML = users.map(user => `
+            <tr>
+                <td>
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl ${user.type === 'Enseignant' ? 'bg-gradient-to-br from-emerald-500 to-emerald-700' : 'bg-gradient-to-br from-orange-400 to-orange-600'} flex items-center justify-center text-white font-display font-bold text-sm">
+                            ${user.nom.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                            <div class="text-white font-medium text-sm">${user.nom}</div>
+                            <div class="text-muted text-xs mt-0.5">${user.email}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-muted text-sm">${user.telephone}</td>
+                <td>
+                    <span class="badge ${user.type === 'Enseignant' ? 'badge-enseignant' : 'badge-assistant'}">
+                        ${user.type === 'Enseignant' ? '🎓 Enseignant' : '🗂️ Assistant'}
+                    </span>
+                </td>
+                <td class="text-muted text-sm">${user.detail}</td>
+                <td>
+                    <span class="badge ${user.statut === 'Actif' ? 'badge-actif' : 'badge-inactif'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${user.statut === 'Actif' ? 'bg-emerald-400' : 'bg-red-400'} inline-block"></span> ${user.statut}
+                    </span>
+                </td>
+                <td class="text-muted text-sm">${user.date}</td>
+                <td>
+                    <div class="flex items-center justify-end gap-1.5">
+                        <a href="#" class="w-8 h-8 rounded-lg border border-border text-muted hover:border-accent hover:text-accent hover:bg-accent/10 flex items-center justify-center text-sm transition-all" title="Voir">👁</a>
+                        <a href="#" class="w-8 h-8 rounded-lg border border-border text-muted hover:border-accent hover:text-accent hover:bg-accent/10 flex items-center justify-center text-sm transition-all" title="Modifier">✏️</a>
+                        <a href="#" onclick="return confirm('Confirmer la suppression ?')" class="w-8 h-8 rounded-lg border border-border text-muted hover:border-red hover:text-red hover:bg-red/10 flex items-center justify-center text-sm transition-all" title="Supprimer">🗑</a>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+  });
+</script>
+</body>
+</html>

@@ -144,11 +144,12 @@ public class EnseignantCreateDTO {
 ## 4. Création des Mappers
 
 ### PermissionMapper
+
 ```java
 package CarnetRouge.CarnetRouge.Mapper;
 
 import CarnetRouge.CarnetRouge.DTO.PermissionDTO;
-import CarnetRouge.CarnetRouge.Entity.Permission;
+import CarnetRouge.CarnetRouge.GDU.Entity.Permission;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring") // ← Spring gère le bean automatiquement
@@ -166,11 +167,12 @@ public interface PermissionMapper {
 ```
 
 ### RoleMapper
+
 ```java
 package CarnetRouge.CarnetRouge.Mapper;
 
 import CarnetRouge.CarnetRouge.DTO.RoleDTO;
-import CarnetRouge.CarnetRouge.Entity.Role;
+import CarnetRouge.CarnetRouge.GDU.Entity.Role;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", uses = {PermissionMapper.class}) // ← uses pour réutiliser PermissionMapper
@@ -185,12 +187,13 @@ public interface RoleMapper {
 ```
 
 ### EnseignantMapper
+
 ```java
 package CarnetRouge.CarnetRouge.Mapper;
 
 import CarnetRouge.CarnetRouge.DTO.EnseignantCreateDTO;
 import CarnetRouge.CarnetRouge.DTO.EnseignantDTO;
-import CarnetRouge.CarnetRouge.Entity.Enseignant;
+import CarnetRouge.CarnetRouge.GDU.Entity.Enseignant;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", uses = {RoleMapper.class})
@@ -232,9 +235,9 @@ package CarnetRouge.CarnetRouge.Service;
 
 import CarnetRouge.CarnetRouge.DTO.EnseignantCreateDTO;
 import CarnetRouge.CarnetRouge.DTO.EnseignantDTO;
-import CarnetRouge.CarnetRouge.Entity.Enseignant;
+import CarnetRouge.CarnetRouge.GDU.Entity.Enseignant;
 import CarnetRouge.CarnetRouge.Mapper.EnseignantMapper;
-import CarnetRouge.CarnetRouge.Repository.EnseignantRepository;
+import CarnetRouge.CarnetRouge.GDU.Repository.EnseignantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
