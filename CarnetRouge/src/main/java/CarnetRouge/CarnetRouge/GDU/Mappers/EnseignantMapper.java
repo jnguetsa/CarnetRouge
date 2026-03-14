@@ -4,6 +4,7 @@ import CarnetRouge.CarnetRouge.GDU.DTO.Request.EnseignantRequestDTO;
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.UpdatePasswordRequestDTO;
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.UpdateProfilEnseignantRequestDTO;
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.EnseignantResponseDTO;
+import CarnetRouge.CarnetRouge.GDU.DTO.Response.EnseignantResponseDetails;
 import CarnetRouge.CarnetRouge.GDU.Entity.Enseignant;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -37,5 +38,6 @@ public interface EnseignantMapper {
                 .map(this::toDTO)
                 .toList();
     }
+    EnseignantResponseDetails toDtoDetails(Enseignant enseignant);
 }
 

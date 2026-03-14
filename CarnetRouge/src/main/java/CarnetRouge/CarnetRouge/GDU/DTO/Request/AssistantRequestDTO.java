@@ -13,6 +13,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AssistantRequestDTO {
+    private Long id;
     private String fonction;
     private String nom;
     private String prenom;

@@ -33,4 +33,6 @@ public interface UtilisateurMapper {
     }
 
     void activateToEntity(ActiveUtilisateurRequestDTO activeUtilisateurRequestDTO, @MappingTarget Utilisateurs utilisateur);
+
+
 }

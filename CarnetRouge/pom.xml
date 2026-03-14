@@ -23,6 +23,8 @@
 		<lombok.version>1.18.30</lombok.version>        <!-- ✅ version explicite -->
 	</properties>
 
+
+
 	<dependencies>
 
 		<!-- Core Spring Boot -->
@@ -87,6 +89,11 @@
 			<scope>runtime</scope>
 		</dependency>
 
+
+		<dependency>
+			<groupId>nz.net.ultraq.thymeleaf</groupId>
+			<artifactId>thymeleaf-layout-dialect</artifactId>
+		</dependency>
 		<!-- Database -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -153,8 +160,12 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
 
-	</dependencies>  <!-- ✅ fermeture de dependencies AVANT build -->
+    </dependencies>  <!-- ✅ fermeture de dependencies AVANT build -->
 
 	<build>
 		<plugins>

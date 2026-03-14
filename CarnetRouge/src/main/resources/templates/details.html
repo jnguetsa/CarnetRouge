@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      >
+
+
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CarnetRouge — Détails Utilisateur</title>
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" th:href="@{/css/user.css}" />
+    <style>
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 18px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted); font-size: 0.82rem;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+            margin-bottom: 28px; width: fit-content;
+        }
+        .back-btn:hover { border-color: var(--border-hover); color: var(--red-soft); }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px; align-items: start;
+        }
+        @media (max-width: 900px) { .details-grid { grid-template-columns: 1fr; } }
+
+        /* Profil */
+        .profile-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 32px 24px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 16px;
+            animation: fadeDown 0.5s ease both;
+        }
+
+        .profile-avatar-ens {
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg, rgba(220,38,38,0.2), rgba(220,38,38,0.05));
+            border: 2px solid rgba(220,38,38,0.25);
+            border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem; font-weight: 700; color: var(--red-soft);
+        }
+
+        .profile-avatar-ass {
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(56,189,248,0.04));
+            border: 2px solid rgba(56,189,248,0.2);
+            border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem; font-weight: 700; color: #38bdf8;
+        }
+
+        .profile-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem; font-weight: 700;
+            text-align: center; letter-spacing: -0.02em;
+        }
+
+        .profile-email {
+            font-size: 0.8rem; color: var(--text-muted);
+            text-align: center; word-break: break-all;
+        }
+
+        .profile-divider {
+            width: 100%; border: none;
+            border-top: 1px solid var(--border); margin: 4px 0;
+        }
+
+        .profile-meta { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+        .meta-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+        .meta-key { color: var(--text-dim); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.08em; font-weight: 600; }
+        .meta-val { color: var(--text); font-weight: 500; }
+
+        /* Cartes droite */
+        .details-right { display: flex; flex-direction: column; gap: 20px; animation: fadeUp 0.5s 0.1s ease both; }
+
+        .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+
+        .info-card-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 16px 24px; border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .info-card-icon {
+            width: 32px; height: 32px;
+            background: var(--red-glow);
+            border: 1px solid rgba(220,38,38,0.2);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--red-soft); font-size: 0.85rem;
+        }
+
+        .info-card-icon-blue {
+            width: 32px; height: 32px;
+            background: rgba(56,189,248,0.08);
+            border: 1px solid rgba(56,189,248,0.15);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: #38bdf8; font-size: 0.85rem;
+        }
+
+        .info-card-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+        .info-card-body {
+            padding: 20px 24px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+        }
+        @media (max-width: 600px) { .info-card-body { grid-template-columns: 1fr; } }
+
+        .info-field-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 5px; }
+        .info-field-value { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+        .info-field-value.empty { color: var(--text-dim); font-style: italic; }
+
+        /* Rôles */
+        .roles-wrap { display: flex; flex-wrap: wrap; gap: 8px; padding: 20px 24px; }
+
+        .role-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px;
+            background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.18);
+            border-radius: 6px; font-size: 0.72rem; font-weight: 700;
+            color: var(--red-soft); letter-spacing: 0.05em; text-transform: uppercase;
+        }
+
+        .perms-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+        .perm-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px;
+            background: rgba(234,179,8,0.07); border: 1px solid rgba(234,179,8,0.15);
+            border-radius: 4px; font-size: 0.68rem; color: rgba(234,179,8,0.8);
+        }
+
+        .role-block { width: 100%; }
+        .role-block-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+
+        /* Bouton détails dans tableau */
+        .action-details { color: var(--warning); }
+        .action-details:hover {
+            background: rgba(245,158,11,0.1);
+            border-color: rgba(245,158,11,0.3);
+            color: var(--warning);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+    <a th:href="@{/dashboard}" class="nav-brand">
+        <div class="nav-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                 fill="none" stroke="white" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+            </svg>
+        </div>
+        <span class="nav-title">Carnet<span>Rouge</span></span>
+    </a>
+    <div class="nav-right">
+        <div class="nav-user">
+            <div class="nav-avatar">A</div>
+            <span sec:authentication="name">Admin</span>
+        </div>
+        <span class="badge-admin">Admin</span>
+        <a th:href="@{/logout}" class="btn-logout">
+            <i class="bi bi-box-arrow-right"></i> Déconnexion
+        </a>
+    </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="container">
+
+    <a th:href="@{/admin/utilisateurs}" class="back-btn">
+        <i class="bi bi-arrow-left"></i> Retour à la liste
+    </a>
+
+    <!-- Header — adapté selon le type -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:if="${type == 'ENSEIGNANT'}">
+                Profil <span>Enseignant</span>
+            </h1>
+            <h1 class="page-title" th:if="${type == 'ASSISTANT'}">
+                Profil <span style="color:#38bdf8;">Assistant</span>
+            </h1>
+            <p class="page-sub">Informations détaillées du membre du personnel.</p>
+        </div>
+        <span th:if="${type == 'ENSEIGNANT'}"
+              class="badge badge-ens" style="font-size:0.8rem; padding:6px 16px;">
+            <i class="bi bi-mortarboard-fill"></i> Enseignant
+        </span>
+        <span th:if="${type == 'ASSISTANT'}"
+              class="badge badge-ass" style="font-size:0.8rem; padding:6px 16px;">
+            <i class="bi bi-person-workspace"></i> Assistant
+        </span>
+    </div>
+
+    <div class="details-grid">
+
+        <!-- ── CARTE PROFIL GAUCHE ── -->
+        <div class="profile-card">
+            <!-- Avatar couleur selon type -->
+            <div th:if="${type == 'ENSEIGNANT'}"
+                 class="profile-avatar-ens"
+                 th:text="${#strings.substring(details.nom, 0, 1)}">E</div>
+            <div th:if="${type == 'ASSISTANT'}"
+                 class="profile-avatar-ass"
+                 th:text="${#strings.substring(details.nom, 0, 1)}">A</div>
+
+            <div class="profile-name"
+                 th:text="${details.nom + ' ' + details.prenom}">Nom Prénom</div>
+            <div class="profile-email" th:text="${details.email}">email@domaine.com</div>
+
+            <hr class="profile-divider" />
+
+            <div class="profile-meta">
+                <div class="meta-row">
+                    <span class="meta-key">Statut</span>
+                    <div th:if="${details.active}" class="status status-active">
+                        <span class="status-dot"></span> Actif
+                    </div>
+                    <div th:unless="${details.active}" class="status status-inactive">
+                        <span class="status-dot"></span> Inactif
+                    </div>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">1ère connexion</span>
+                    <span class="meta-val"
+                          th:text="${details.firstLogin ? 'Oui' : 'Non'}">—</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Créé le</span>
+                    <span class="meta-val"
+                          th:text="${#temporals.format(details.createdAt, 'dd/MM/yyyy')}">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── CARTES DROITE ── -->
+        <div class="details-right">
+
+            <!-- Informations personnelles — commun aux deux -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon"><i class="bi bi-person-fill"></i></div>
+                    <span class="info-card-title">Informations personnelles</span>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-field">
+                        <div class="info-field-label">Nom</div>
+                        <div class="info-field-value" th:text="${details.nom}">—</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-field-label">Prénom</div>
+                        <div class="info-field-value" th:text="${details.prenom}">—</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-field-label">Date de naissance</div>
+                        <div class="info-field-value"
+                             th:text="${#dates.format(details.dateNaissance, 'dd/MM/yyyy')}">—</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-field-label">Téléphone</div>
+                        <div class="info-field-value"
+                             th:text="${details.telephone ?: '—'}"
+                             th:classappend="${details.telephone == null} ? 'empty' : ''">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations académiques — Enseignant uniquement -->
+            <div th:if="${type == 'ENSEIGNANT'}" class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <span class="info-card-title">Informations académiques</span>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-field">
+                        <div class="info-field-label">Grade</div>
+                        <div class="info-field-value"
+                             th:text="${details.grade ?: '—'}"
+                             th:classappend="${details.grade == null} ? 'empty' : ''">—</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-field-label">Catégorie</div>
+                        <div class="info-field-value"
+                             th:text="${details.typeEnseignant ?: '—'}"
+                             th:classappend="${details.typeEnseignant == null} ? 'empty' : ''">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fonction — Assistant uniquement -->
+            <div th:if="${type == 'ASSISTANT'}" class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon-blue">
+                        <i class="bi bi-person-workspace"></i>
+                    </div>
+                    <span class="info-card-title">Fonction</span>
+                </div>
+                <div class="info-card-body" style="grid-template-columns:1fr;">
+                    <div class="info-field">
+                        <div class="info-field-label">Fonction occupée</div>
+                        <div class="info-field-value"
+                             th:text="${details.fonction ?: '—'}"
+                             th:classappend="${details.fonction == null} ? 'empty' : ''">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rôles & Permissions — commun aux deux -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon"><i class="bi bi-shield-fill"></i></div>
+                    <span class="info-card-title">Rôles &amp; Permissions</span>
+                </div>
+                <div class="roles-wrap">
+                    <p th:if="${#sets.isEmpty(details.roles)}"
+                       style="color:var(--text-dim); font-size:0.82rem; font-style:italic;">
+                        Aucun rôle assigné
+                    </p>
+                    <div th:each="role : ${details.roles}" class="role-block">
+                        <div class="role-block-header">
+                            <span class="role-badge">
+                                <i class="bi bi-shield-check"></i>
+                                <span th:text="${#strings.replace(role.getName(), 'ROLE_', '')}"></span>
+                            </span>
+                        </div>
+                        <div class="perms-wrap">
+                            <span th:each="perm : ${role.permissions}" class="perm-badge">
+                                <i class="bi bi-key-fill"></i>
+                                <span th:text="${perm.getDescription()}"></span>
+                            </span>
+                            <span th:if="${#sets.isEmpty(role.permissions)}"
+                                  style="color:var(--text-dim); font-size:0.72rem; font-style:italic;">
+                                Aucune permission
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

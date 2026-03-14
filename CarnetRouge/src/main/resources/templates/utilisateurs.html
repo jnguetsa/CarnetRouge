@@ -1,208 +1,971 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="fr" data-theme="dark" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      >
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CarnetRouge — Gestion Utilisateurs</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
-    <link rel="stylesheet" th:href="@{/css/user.css}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarnetRouge — Gestion Utilisateurs</title>
+  <link rel="manifest" href="/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+  <link rel="stylesheet" th:href="@{/css/user.css}" />
 
+  <style>
+    /* ══════════════════════════════════════════
+       WIZARD MODAL — styles autonomes
+    ══════════════════════════════════════════ */
+
+    /* Overlay */
+    .wiz-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(5px);
+      align-items: center; justify-content: center;
+    }
+    .wiz-overlay.open { display: flex; }
+
+    /* Boîte principale */
+    .wiz-box {
+      background: #111318;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px;
+      width: 540px; max-width: 96vw;
+      max-height: 92vh; overflow-y: auto;
+      animation: wizIn 0.22s ease;
+    }
+    @keyframes wizIn {
+      from { opacity:0; transform:scale(0.94) translateY(-10px); }
+      to   { opacity:1; transform:scale(1)    translateY(0);     }
+    }
+
+    /* En-tête wizard */
+    .wiz-head {
+      padding: 24px 28px 0;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .wiz-ico {
+      width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+      background: rgba(220,38,38,0.12); color: #dc2626;
+      border: 1px solid rgba(220,38,38,0.22);
+    }
+    .wiz-titles { flex: 1; }
+    .wiz-title   { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; color:#f0f0f0; }
+    .wiz-sub     { font-size:0.77rem; color:#9ca3af; margin-top:3px; }
+    .wiz-close-btn {
+      background: none; border: none; color: #6b7280; font-size: 0.95rem;
+      cursor: pointer; padding: 4px 6px; border-radius: 5px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .wiz-close-btn:hover { color: #f0f0f0; background: rgba(255,255,255,0.05); }
+
+    /* Stepper */
+    .wiz-stepper {
+      display: flex; align-items: center; gap: 0;
+      padding: 20px 28px 0;
+    }
+    .wiz-step {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.72rem; font-weight: 700; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      transition: color 0.25s;
+    }
+    .wiz-step.active { color: #dc2626; }
+    .wiz-step.done   { color: #4ade80; }
+    .wiz-step-num {
+      width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 800;
+      background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1);
+      transition: all 0.25s;
+    }
+    .wiz-step.active .wiz-step-num {
+      background: rgba(220,38,38,0.12); border-color: rgba(220,38,38,0.4); color: #dc2626;
+    }
+    .wiz-step.done .wiz-step-num {
+      background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.35); color: #4ade80;
+    }
+    .wiz-step-line {
+      flex: 1; height: 1px; background: rgba(255,255,255,0.08); margin: 0 10px;
+      transition: background 0.3s;
+    }
+    .wiz-step-line.done { background: rgba(74,222,128,0.3); }
+
+    /* Corps du wizard */
+    .wiz-body { padding: 22px 28px; }
+
+    /* Panneaux d'étapes */
+    .wiz-panel { display: none; }
+    .wiz-panel.active { display: block; animation: panelIn 0.18s ease; }
+    @keyframes panelIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Champs */
+    .wf { margin-bottom: 15px; }
+    .wf-label {
+      font-size: 0.67rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: #6b7280; margin-bottom: 6px;
+    }
+    .wf-label span.req { color: #dc2626; margin-left: 2px; }
+    .wf-input, .wf-select {
+      width: 100%; box-sizing: border-box;
+      background: #1a1d24; border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px; color: #f0f0f0; font-size: 0.84rem;
+      padding: 10px 13px; font-family:'DM Sans',sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .wf-input:focus, .wf-select:focus { border-color: rgba(220,38,38,0.45); }
+    .wf-input.error { border-color: rgba(248,113,113,0.55); }
+    .wf-select option { background: #1a1d24; }
+    .wf-hint { font-size: 0.71rem; color: #6b7280; margin-top: 5px; }
+    .wf-error { font-size: 0.71rem; color: #f87171; margin-top: 4px; display: none; }
+    .wf-error.show { display: block; }
+
+    /* Grille 2 colonnes */
+    .wf-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:500px) { .wf-grid2 { grid-template-columns:1fr; } }
+
+    /* ── Étape 2 : Rôle + Permissions ── */
+    .role-select-card {
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 9px; padding: 13px 15px;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    }
+    .role-select-card:hover { border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.04); }
+    .role-select-card.selected {
+      border-color: rgba(220,38,38,0.5); background: rgba(220,38,38,0.07);
+    }
+    .role-select-card input[type="radio"] { accent-color: #dc2626; width:15px;height:15px;flex-shrink:0; }
+    .role-card-info { flex: 1; min-width:0; }
+    .role-card-name { font-size:0.8rem; font-weight:700; color:#f0f0f0; }
+    .role-card-desc { font-size:0.7rem; color:#9ca3af; margin-top:2px; }
+
+    /* Permissions à cocher */
+    .perms-container {
+      margin-top: 14px; padding: 14px; border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.02);
+    }
+    .perms-container-label {
+      font-size: 0.65rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.1em; color:#6b7280; margin-bottom:10px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .perms-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    @media(max-width:480px) { .perms-grid { grid-template-columns:1fr; } }
+    .perm-check-card {
+      display: flex; align-items: flex-start; gap: 9px;
+      padding: 9px 11px; border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .perm-check-card:hover { border-color: rgba(234,179,8,0.25); background: rgba(234,179,8,0.05); }
+    .perm-check-card.checked { border-color: rgba(234,179,8,0.35); background: rgba(234,179,8,0.07); }
+    .perm-check-card input[type="checkbox"] { accent-color: #d97706; width:14px;height:14px;flex-shrink:0;margin-top:1px; }
+    .perm-check-name { font-size:0.73rem; font-weight:600; color:#f0f0f0; }
+    .perm-check-desc { font-size:0.67rem; color:#9ca3af; margin-top:1px; }
+
+    /* Aucun rôle */
+    .no-roles-msg { text-align:center; color:#6b7280; font-size:0.82rem; font-style:italic; padding:20px 0; }
+
+    /* ── Étape 3 : Confirmation email ── */
+    .confirm-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+    }
+    .confirm-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.81rem;
+    }
+    .confirm-row:last-child { border-bottom: none; }
+    .confirm-key { color: #6b7280; width: 130px; flex-shrink:0; font-size:0.71rem; text-transform:uppercase; font-weight:600; }
+    .confirm-val { color: #f0f0f0; font-weight:500; flex:1; word-break:break-all; }
+    .confirm-badge {
+      display: inline-flex; align-items:center; gap:5px;
+      padding: 2px 9px; border-radius: 4px; font-size: 0.68rem; font-weight:700;
+    }
+    .confirm-badge.role  { background:rgba(220,38,38,0.08); color:#ef4444; border:1px solid rgba(220,38,38,0.18); text-transform:uppercase; }
+    .confirm-badge.perm  { background:rgba(234,179,8,0.08); color:rgba(234,179,8,0.85); border:1px solid rgba(234,179,8,0.18); }
+
+    .email-preview {
+      background: rgba(56,189,248,0.05);
+      border: 1px solid rgba(56,189,248,0.15);
+      border-radius: 9px; padding: 14px 16px;
+      margin-top: 12px;
+    }
+    .email-preview-label {
+      font-size:0.67rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.09em; color:rgba(56,189,248,0.7); margin-bottom:8px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .email-preview-body { font-size:0.79rem; color:#9ca3af; line-height:1.6; }
+    .email-preview-body strong { color:#f0f0f0; }
+
+    /* Pied du wizard */
+    .wiz-foot {
+      padding: 16px 28px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .wiz-foot-right { display:flex; gap:10px; }
+    .btn-wiz-back {
+      padding:9px 18px; border-radius:8px; font-size:0.78rem; font-weight:600;
+      background:transparent; border:1px solid rgba(255,255,255,0.1); color:#9ca3af;
+      cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+      display:flex; align-items:center; gap:7px;
+    }
+    .btn-wiz-back:hover { border-color:rgba(255,255,255,0.2); color:#f0f0f0; }
+    .btn-wiz-next {
+      padding:9px 22px; border-radius:8px; font-size:0.78rem; font-weight:700;
+      border:none; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+      background:#dc2626; color:#fff;
+      display:flex; align-items:center; gap:7px;
+    }
+    .btn-wiz-next:hover { background:#b91c1c; }
+    .btn-wiz-next:disabled { opacity:0.45; cursor:not-allowed; }
+    .btn-wiz-submit {
+      padding:9px 22px; border-radius:8px; font-size:0.78rem; font-weight:700;
+      border:none; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+      background:#16a34a; color:#fff;
+      display:flex; align-items:center; gap:7px;
+    }
+    .btn-wiz-submit:hover { background:#15803d; }
+
+    .step-info { font-size:0.72rem; color:#6b7280; }
+
+    /* Loader spinner sur le bouton submit */
+    .spin { animation: spin 0.8s linear infinite; display:inline-block; }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    /* Toast */
+    .toast {
+      position:fixed;bottom:26px;right:26px;z-index:9999;
+      background:#1c1f28;border:1px solid rgba(255,255,255,0.09);
+      border-radius:9px;padding:12px 18px;
+      display:flex;align-items:center;gap:10px;
+      font-size:0.8rem;color:#f0f0f0;
+      box-shadow:0 8px 30px rgba(0,0,0,0.55);
+      transform:translateY(70px);opacity:0;
+      transition:transform 0.3s ease,opacity 0.3s ease;pointer-events:none;
+    }
+    .toast.show { transform:translateY(0);opacity:1; }
+    .toast-i { font-size:1rem; }
+    .toast.ok   .toast-i { color:#4ade80; }
+    .toast.err  .toast-i { color:#f87171; }
+    .toast.info .toast-i { color:#38bdf8; }
+
+    /* Bouton Ajouter dans le header */
+    .btn-add-student {
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 20px;border-radius:9px;
+      background:#dc2626;color:#fff;
+      border:none;font-size:0.8rem;font-weight:700;
+      font-family:'DM Sans',sans-serif;cursor:pointer;
+      transition:background 0.2s,transform 0.15s;
+    }
+    .btn-add-student:hover { background:#b91c1c;transform:translateY(-1px); }
+  </style>
 </head>
 <body>
 
 <!-- ── NAVBAR ── -->
 <nav class="navbar">
-    <a th:href="@{/dashboard}" class="nav-brand">
-        <div class="nav-logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
-            </svg>
-        </div>
-        <span class="nav-title">Carnet<span>Rouge</span></span>
-    </a>
-
-    <div class="nav-right">
-        <div class="nav-user">
-            <div class="nav-avatar">A</div>
-            <span sec:authentication="name">Admin</span>
-        </div>
-        <span class="badge-admin">Admin</span>
-        <a th:href="@{/logout}" class="btn-logout">
-            <i class="bi bi-box-arrow-right"></i> Déconnexion
-        </a>
+  <a th:href="@{/dashboard}" class="nav-brand">
+    <div class="nav-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+           fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+      </svg>
     </div>
+    <span class="nav-title">Carnet<span>Rouge</span></span>
+  </a>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar">A</div>
+      <span sec:authentication="name">Admin</span>
+    </div>
+    <span class="badge-admin">Admin</span>
+    <a th:href="@{/logout}" class="btn-logout">
+      <i class="bi bi-box-arrow-right"></i> Déconnexion
+    </a>
+  </div>
 </nav>
 
 <!-- ── MAIN ── -->
 <main class="container">
 
-    <!-- Page Header -->
-    <div class="page-header">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Personnel <span>Enseignant</span><br>&amp; Assistant</h1>
+      <p class="page-sub">Gérez les accès et les informations du personnel académique.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <!-- ★ Bouton Ajouter étudiant -->
+      <button type="button" class="btn-add-student" onclick="wizOpen()">
+        <i class="bi bi-person-plus-fill"></i> Ajouter un étudiant
+      </button>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
         <div>
-            <h1 class="page-title">Personnel <span>Enseignant</span><br>&amp; Assistant</h1>
-            <p class="page-sub">Gérez les accès et les informations du personnel académique.</p>
+          <div class="stat-label">Total Utilisateurs</div>
+          <div class="stat-value" th:text="${utilisateurs.totalElements}">0</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-            <div>
-                <div class="stat-label">Total Utilisateurs</div>
-                <div class="stat-value" th:text="${utilisateurs.totalElements}">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="filter-card">
+    <form th:action="@{/admin/utilisateurs}" method="get">
+      <div class="filter-grid">
+        <div>
+          <label class="filter-label">Recherche</label>
+          <div class="input-wrap">
+            <i class="bi bi-search"></i>
+            <input type="text" name="recherche"
+                   th:value="${recherche ?: param.recherche ?: ''}"
+                   placeholder="Nom, email, grade…" class="input-field" />
+          </div>
+        </div>
+        <div>
+          <label class="filter-label">Type d'utilisateur</label>
+          <div style="position:relative;">
+            <select name="type" class="select-field" style="padding-left:14px;min-width:200px;">
+              <option value="TOUS" th:selected="${(typeSelectionne ?: param.type) == 'TOUS' or (typeSelectionne == null and param.type == null)}">Tous les types</option>
+              <option value="ENS"  th:selected="${(typeSelectionne ?: param.type) == 'ENS'}">Enseignants</option>
+              <option value="ASS"  th:selected="${(typeSelectionne ?: param.type) == 'ASS'}">Assistants</option>
+            </select>
+            <i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;font-size:0.75rem;"></i>
+          </div>
+        </div>
+        <div>
+          <label class="filter-label">&nbsp;</label>
+          <div class="filter-actions">
+            <button type="submit" class="btn-primary"><i class="bi bi-funnel-fill"></i> Filtrer</button>
+            <a th:href="@{/admin/utilisateurs}" class="btn-ghost" title="Réinitialiser">
+              <i class="bi bi-arrow-clockwise"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-title">Liste du Personnel</span>
+      <span class="table-count" th:text="${utilisateurs.totalElements + ' résultats'}">0 résultats</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Contact</th>
+          <th style="text-align:center;">Type</th>
+          <th class="th-specs">Spécifications</th>
+          <th>Rôles</th>
+          <th>Statut</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${utilisateurs.content}">
+          <td>
+            <div class="user-cell">
+              <div class="avatar" th:text="${#strings.substring(u.nom,0,1)}">U</div>
+              <div>
+                <div class="user-name" th:text="${u.nom + ' ' + u.prenom}">Nom Prenom</div>
+                <div class="user-id" th:text="${'#' + u.id}">#000</div>
+              </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Filter Card -->
-    <div class="filter-card">
-        <!-- On retire action="#" et le champ hidden page=0 pour un comportement natif correct -->
-        <form th:action="@{/admin/utilisateurs}" method="get">
-            <div class="filter-grid">
-                <!-- Search -->
-                <div>
-                    <label class="filter-label">Recherche</label>
-                    <div class="input-wrap">
-                        <i class="bi bi-search"></i>
-                        <input
-                                type="text" name="recherche" th:value="${recherche ?: param.recherche ?: ''}"
-                                placeholder="Nom, email, grade…"
-                                class="input-field"
-                        />
-                    </div>
-                </div>
-
-                <!-- Type -->
-                <div>
-                    <label class="filter-label">Type d'utilisateur</label>
-                    <div style="position:relative;">
-                        <select name="type" class="select-field" style="padding-left:14px; min-width:200px;">
-                            <option value="TOUS" th:selected="${(typeSelectionne ?: param.type) == 'TOUS' or (typeSelectionne == null and param.type == null)}">Tous les types</option>
-                            <option value="ENS"  th:selected="${(typeSelectionne ?: param.type) == 'ENS'}">Enseignants</option>
-                            <option value="ASS"  th:selected="${(typeSelectionne ?: param.type) == 'ASS'}">Assistants</option>
-                        </select>
-                        <i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;font-size:0.75rem;"></i>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div>
-                    <label class="filter-label">&nbsp;</label>
-                    <div class="filter-actions">
-                        <button type="submit" class="btn-primary">
-                            <i class="bi bi-funnel-fill"></i> Filtrer
-                        </button>
-                        <a th:href="@{/admin/utilisateurs}" class="btn-ghost" title="Réinitialiser">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </a>
-                    </div>
-                </div>
+          </td>
+          <td class="email-cell" th:text="${u.email}">email@test.com</td>
+          <td style="text-align:center;">
+            <span th:if="${u.type == 'ENS'}" class="badge badge-ens"><i class="bi bi-mortarboard-fill"></i> ENS</span>
+            <span th:if="${u.type == 'ASS'}" class="badge badge-ass"><i class="bi bi-person-workspace"></i> ASS</span>
+          </td>
+          <td class="specs-cell td-specs">
+            <div th:if="${u.type == 'ENS'}">
+              <div class="spec-row"><span class="spec-key">Grade</span><span class="spec-val" th:text="${u.grade}"></span></div>
+              <div class="spec-row"><span class="spec-key">Cat.</span><span class="spec-val" th:text="${u.typeEnseignant}"></span></div>
             </div>
-        </form>
+            <div th:if="${u.type == 'ASS'}">
+              <div class="spec-row"><span class="spec-key">Fonct.</span><span class="spec-val" th:text="${u.fonction}"></span></div>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                            <span th:each="role : ${u.roles}"
+                                  th:text="${#strings.replace(role.name,'ROLE_','')}"
+                                  style="font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(200,25,42,0.08);color:rgba(239,68,68,0.8);border:1px solid rgba(200,25,42,0.15);">
+                            </span>
+            </div>
+          </td>
+          <td>
+            <div th:if="${u.active}"   class="status status-active"><span class="status-dot"></span> Actif</div>
+            <div th:unless="${u.active}" class="status status-inactive"><span class="status-dot"></span> Inactif</div>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a th:href="@{/admin/utilisateurs/details/{id}(id=${u.id})}"
+                 class="action-btn" title="Voir détails" style="color:var(--warning);">
+                <i class="bi bi-eye-fill"></i>
+              </a>
+              <form th:action="@{/admin/utilisateurs/supprimer}" method="post"
+                    style="display:inline;"
+                    onsubmit="return confirm('Confirmer la suppression ?')">
+                <input type="hidden" name="id" th:value="${u.id}" />
+                <button type="submit" class="action-btn action-delete" title="Supprimer">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- Table -->
-    <div class="table-card">
-        <div class="table-header">
-            <span class="table-title">Liste du Personnel</span>
-            <span class="table-count" th:text="${utilisateurs.totalElements + ' résultats'}">0 résultats</span>
-        </div>
-
-        <div class="table-wrap">
-            <table>
-                <thead>
-                <tr>
-                    <th>Utilisateur</th>
-                    <th>Contact</th>
-                    <th style="text-align:center;">Type</th>
-                    <th class="th-specs">Spécifications</th>
-                    <th>Statut</th>
-                    <th style="text-align:right;">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                <!-- THYMELEAF LOOP — th:each -->
-                <tr th:each="u : ${utilisateurs.content}">
-                    <td>
-                        <div class="user-cell">
-                            <div class="avatar" th:text="${#strings.substring(u.nom,0,1)}">U</div>
-                            <div>
-                                <div class="user-name" th:text="${u.nom + ' ' + u.prenom}">Nom Prenom</div>
-                                <div class="user-id" th:text="${'#' + u.id}">#000</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="email-cell" th:text="${u.email}">email@test.com</td>
-                    <td style="text-align:center;">
-                        <span th:if="${u.type == 'ENS'}" class="badge badge-ens"><i class="bi bi-mortarboard-fill"></i> ENS</span>
-                        <span th:if="${u.type == 'ASS'}" class="badge badge-ass"><i class="bi bi-person-workspace"></i> ASS</span>
-                    </td>
-                    <td class="specs-cell td-specs">
-                        <div th:if="${u.type == 'ENS'}">
-                            <div class="spec-row"><span class="spec-key">Grade</span><span class="spec-val" th:text="${u.grade}"></span></div>
-                            <div class="spec-row"><span class="spec-key">Cat.</span><span class="spec-val" th:text="${u.typeEnseignant}"></span></div>
-                        </div>
-                        <div th:if="${u.type == 'ASS'}">
-                            <div class="spec-row"><span class="spec-key">Fonct.</span><span class="spec-val" th:text="${u.fonction}"></span></div>
-                        </div>
-                    </td>
-                    <td>
-                        <div th:if="${u.active}" class="status status-active">
-                            <span class="status-dot"></span> Actif
-                        </div>
-                        <div th:unless="${u.active}" class="status status-inactive">
-                            <span class="status-dot"></span> Inactif
-                        </div>
-                    </td>
-                    <td>
-                        <div class="actions-cell">
-
-
-                            <a th:href="@{/admin/utilisateurs/modifier(id=${u.id})}"
-                               class="action-btn action-edit" title="Modifier">
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
-
-                            <form th:action="@{/admin/utilisateurs/supprimer}" method="post"
-                                  style="display:inline;"
-                                  onsubmit="return confirm('Confirmer la suppression ?')">
-                                <input type="hidden" name="id" th:value="${u.id}" />
-                                <button type="submit" class="action-btn action-delete" title="Supprimer">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Pagination Thymeleaf avec gestion robuste anti-null et paramètre Fallback -->
-    <div th:if="${utilisateurs.totalPages > 1}" class="pagination">
-        <!-- Bouton précédent -->
-        <a th:if="${utilisateurs.hasPrevious()}"
-           th:href="@{/admin/utilisateurs(page=${utilisateurs.number - 1}, recherche=${recherche ?: param.recherche}, type=${typeSelectionne ?: param.type})}"
-           class="page-btn" title="Page précédente">
-            <i class="bi bi-chevron-left"></i>
-        </a>
-
-        <!-- Numéros de pages sécurisé -->
-        <a th:each="i : ${#numbers.sequence(0, utilisateurs.totalPages > 0 ? utilisateurs.totalPages - 1 : 0)}"
-           th:href="@{/admin/utilisateurs(page=${i}, recherche=${recherche ?: param.recherche}, type=${typeSelectionne ?: param.type})}"
-           th:text="${i + 1}"
-           class="page-btn"
-           th:classappend="${i == utilisateurs.number} ? 'active' : ''">
-        </a>
-
-        <!-- Bouton suivant -->
-        <a th:if="${utilisateurs.hasNext()}"
-           th:href="@{/admin/utilisateurs(page=${utilisateurs.number + 1}, recherche=${recherche ?: param.recherche}, type=${typeSelectionne ?: param.type})}"
-           class="page-btn" title="Page suivante">
-            <i class="bi bi-chevron-right"></i>
-        </a>
-    </div>
+  <!-- Pagination -->
+  <div th:if="${utilisateurs.totalPages > 1}" class="pagination">
+    <a th:if="${utilisateurs.hasPrevious()}"
+       th:href="@{/admin/utilisateurs(page=${utilisateurs.number - 1},recherche=${recherche ?: param.recherche},type=${typeSelectionne ?: param.type})}"
+       class="page-btn" title="Page précédente"><i class="bi bi-chevron-left"></i></a>
+    <a th:each="i : ${#numbers.sequence(0, utilisateurs.totalPages > 0 ? utilisateurs.totalPages - 1 : 0)}"
+       th:href="@{/admin/utilisateurs(page=${i},recherche=${recherche ?: param.recherche},type=${typeSelectionne ?: param.type})}"
+       th:text="${i + 1}" class="page-btn"
+       th:classappend="${i == utilisateurs.number} ? 'active' : ''"></a>
+    <a th:if="${utilisateurs.hasNext()}"
+       th:href="@{/admin/utilisateurs(page=${utilisateurs.number + 1},recherche=${recherche ?: param.recherche},type=${typeSelectionne ?: param.type})}"
+       class="page-btn" title="Page suivante"><i class="bi bi-chevron-right"></i></a>
+  </div>
 
 </main>
+
+
+<!-- ══════════════════════════════════════════════
+     WIZARD MODAL — Ajouter un étudiant
+     Étape 1 : Informations personnelles
+     Étape 2 : Rôle & Permissions
+     Étape 3 : Confirmation + envoi email
+══════════════════════════════════════════════ -->
+<div class="wiz-overlay" id="wiz-overlay">
+  <div class="wiz-box">
+
+    <!-- En-tête -->
+    <div class="wiz-head">
+      <div class="wiz-ico"><i class="bi bi-person-plus-fill"></i></div>
+      <div class="wiz-titles">
+        <div class="wiz-title">Ajouter un étudiant</div>
+        <div class="wiz-sub" id="wiz-sub-text">Renseignez les informations personnelles</div>
+      </div>
+      <button type="button" class="wiz-close-btn" onclick="wizClose()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Stepper -->
+    <div class="wiz-stepper">
+      <div class="wiz-step active" id="step-ind-1">
+        <div class="wiz-step-num">1</div>
+        <span>Infos</span>
+      </div>
+      <div class="wiz-step-line" id="line-1-2"></div>
+      <div class="wiz-step" id="step-ind-2">
+        <div class="wiz-step-num">2</div>
+        <span>Rôle &amp; Permissions</span>
+      </div>
+      <div class="wiz-step-line" id="line-2-3"></div>
+      <div class="wiz-step" id="step-ind-3">
+        <div class="wiz-step-num">3</div>
+        <span>Confirmation</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════
+         ÉTAPE 1 — Infos perso
+    ════════════════════════ -->
+    <div class="wiz-body">
+      <div class="wiz-panel active" id="wiz-panel-1">
+        <div class="wf-grid2">
+          <div class="wf">
+            <div class="wf-label">Nom <span class="req">*</span></div>
+            <input type="text" class="wf-input" id="f-nom" placeholder="Ex : Nguema" />
+            <div class="wf-error" id="err-nom">Le nom est obligatoire (min 2 caractères)</div>
+          </div>
+          <div class="wf">
+            <div class="wf-label">Prénom <span class="req">*</span></div>
+            <input type="text" class="wf-input" id="f-prenom" placeholder="Ex : Jean-Pierre" />
+            <div class="wf-error" id="err-prenom">Le prénom est obligatoire (min 2 caractères)</div>
+          </div>
+        </div>
+        <div class="wf">
+          <div class="wf-label">Matricule <span class="req">*</span></div>
+          <input type="text" class="wf-input" id="f-matricule" placeholder="Ex : ETU-2024-001" />
+          <div class="wf-error" id="err-matricule">Le matricule est obligatoire</div>
+        </div>
+        <div class="wf">
+          <div class="wf-label">Email <span class="req">*</span></div>
+          <input type="email" class="wf-input" id="f-email" placeholder="etudiant@universite.cm" />
+          <div class="wf-error" id="err-email">Email invalide ou obligatoire</div>
+        </div>
+        <div class="wf-grid2">
+          <div class="wf">
+            <div class="wf-label">Date de naissance <span class="req">*</span></div>
+            <input type="date" class="wf-input" id="f-dob" />
+            <div class="wf-error" id="err-dob">Date de naissance obligatoire (passé)</div>
+          </div>
+          <div class="wf">
+            <div class="wf-label">Niveau <span class="req">*</span></div>
+            <select class="wf-select" id="f-niveau">
+              <option value="">-- Sélectionner --</option>
+              <!--
+                  Les valeurs correspondent à ton enum TypeNiveau.
+                  Adapte selon les valeurs exactes de ton enum.
+              -->
+              <option th:each="niv : ${T(CarnetRouge.CarnetRouge.GDU.Enum.TypeNiveau).values()}"
+                      th:value="${niv.name()}"
+                      th:text="${niv.name()}">NIVEAU</option>
+            </select>
+            <div class="wf-error" id="err-niveau">Veuillez sélectionner un niveau</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════
+           ÉTAPE 2 — Rôle & Perms
+      ════════════════════════ -->
+      <div class="wiz-panel" id="wiz-panel-2">
+
+        <div class="wf-label" style="margin-bottom:10px;">
+          Rôle à assigner <span class="req">*</span>
+        </div>
+
+        <!--
+            availableRoles : List<RoleResponseDTO> passé par le contrôleur
+            → role.id, role.name, role.description, role.permissions
+        -->
+        <div th:if="${availableRoles != null and !availableRoles.empty}">
+          <div th:each="role : ${availableRoles}" class="role-select-card"
+               th:id="${'rc-' + role.id}"
+               th:attr="data-role-id=${role.id}, data-role-name=${role.name}"
+               onclick="selectRole(this)">
+            <input type="radio" name="wiz-role" th:value="${role.id}"
+                   th:id="${'r-' + role.id}" />
+            <div class="role-card-info">
+              <div class="role-card-name"
+                   th:text="${role.name != null ? #strings.replace(role.name,'ROLE_','') : ''}">ROLE</div>
+              <div class="role-card-desc"
+                   th:text="${role.description != null ? role.description : 'Aucune description'}">desc</div>
+            </div>
+            <!--
+                On stocke les permissions en JSON dans un attribut data-*
+                pour pouvoir les afficher dynamiquement côté JS
+            -->
+            <span th:attr="data-perms=${#strings.isEmpty(role.permissions != null ? '' : '') ? '[]' : ''}"
+                  style="display:none;" class="role-perms-data"
+                  th:id="${'perms-data-' + role.id}">
+                            <!-- Chaque permission rendue en JSON pour le JS -->
+                            <th:block th:each="perm,stat : ${role.permissions}"
+                                      th:text="${stat.first ? '[' : ''}">
+                            </th:block>
+                        </span>
+          </div>
+        </div>
+        <div th:if="${availableRoles == null or availableRoles.empty}" class="no-roles-msg">
+          <i class="bi bi-info-circle"></i> Aucun rôle disponible. Veuillez d'abord créer des rôles.
+        </div>
+        <div class="wf-error show" id="err-role" style="display:none;">Veuillez sélectionner un rôle</div>
+
+        <!-- Permissions (affichées dynamiquement par JS) -->
+        <div class="perms-container" id="perms-container" style="display:none;">
+          <div class="perms-container-label">
+            <i class="bi bi-key-fill" style="color:rgba(234,179,8,0.6);"></i>
+            Permissions à accorder — cochez celles dont l'étudiant a besoin
+          </div>
+          <!--
+              Rendu Thymeleaf de TOUTES les permissions de TOUS les rôles,
+              chaque groupe masqué par défaut, affiché par JS selon le rôle sélectionné
+          -->
+          <div th:each="role : ${availableRoles}"
+               th:id="${'perms-group-' + role.id}"
+               class="perms-grid" style="display:none;">
+            <label th:each="perm : ${role.permissions}"
+                   class="perm-check-card"
+                   th:id="${'pck-' + perm.name}"
+                   onclick="togglePermCard(this)">
+              <input type="checkbox"
+                     th:value="${perm.name}"
+                     th:attr="data-perm-desc=${perm.description != null ? perm.description : perm.name}"
+                     class="wiz-perm-check" />
+              <div>
+                <div class="perm-check-name"
+                     th:text="${perm.name != null ? #strings.replace(perm.name,'_',' ') : ''}">PERM</div>
+                <div class="perm-check-desc"
+                     th:text="${perm.description != null ? perm.description : ''}">desc</div>
+              </div>
+            </label>
+            <div th:if="${role.permissions == null or role.permissions.empty}"
+                 style="grid-column:1/-1;color:#6b7280;font-size:0.75rem;font-style:italic;">
+              Ce rôle n'a pas de permissions configurées
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /wiz-panel-2 -->
+
+      <!-- ════════════════════════
+           ÉTAPE 3 — Confirmation
+      ════════════════════════ -->
+      <div class="wiz-panel" id="wiz-panel-3">
+
+        <div class="confirm-card" id="confirm-summary">
+          <!-- Rempli par JS -->
+        </div>
+
+        <!-- Aperçu de l'email qui sera envoyé -->
+        <div class="email-preview">
+          <div class="email-preview-label">
+            <i class="bi bi-envelope-fill"></i>
+            Email qui sera envoyé à l'étudiant
+          </div>
+          <div class="email-preview-body">
+            Bonjour <strong id="prev-prenom">—</strong>,<br/><br/>
+            Votre compte a été créé sur la plateforme <strong>CarnetRouge</strong>.<br/>
+            Voici vos identifiants de connexion :<br/><br/>
+            &nbsp;&nbsp;📧 Email : <strong id="prev-email">—</strong><br/>
+            &nbsp;&nbsp;🔑 Mot de passe temporaire : <strong id="prev-pwd" style="font-family:monospace;color:#38bdf8;">— généré automatiquement —</strong><br/><br/>
+            Vous devrez changer ce mot de passe lors de votre première connexion.<br/><br/>
+            <em style="color:#6b7280;">— L'équipe CarnetRouge</em>
+          </div>
+        </div>
+
+      </div><!-- /wiz-panel-3 -->
+    </div><!-- /wiz-body -->
+
+    <!-- Pied du wizard -->
+    <div class="wiz-foot">
+      <span class="step-info" id="wiz-step-info">Étape 1 sur 3</span>
+      <div class="wiz-foot-right">
+        <button type="button" class="btn-wiz-back" id="btn-wiz-back"
+                onclick="wizPrev()" style="display:none;">
+          <i class="bi bi-arrow-left"></i> Retour
+        </button>
+        <button type="button" class="btn-wiz-next" id="btn-wiz-next" onclick="wizNext()">
+          Suivant <i class="bi bi-arrow-right"></i>
+        </button>
+        <!--
+            Le formulaire de soumission final — action vers ton contrôleur
+            Les champs hidden sont remplis par JS avant submit
+        -->
+        <form id="wiz-form" th:action="@{/admin/etudiants/creer}" method="post" style="display:none;">
+          <input type="hidden" id="h-nom"       name="nom"       />
+          <input type="hidden" id="h-prenom"    name="prenom"    />
+          <input type="hidden" id="h-matricule" name="matricle"  /><!-- ← nom du champ dans EtudiantRequestDTO -->
+          <input type="hidden" id="h-email"     name="email"     />
+          <input type="hidden" id="h-dob"       name="dateNaissance" />
+          <input type="hidden" id="h-niveau"    name="niveau"    />
+          <input type="hidden" id="h-role-id"   name="roleId"    />
+          <!-- Les permissions cochées seront ajoutées dynamiquement -->
+          <div id="h-perms-container"></div>
+          <button type="submit" class="btn-wiz-submit" id="btn-wiz-submit">
+            <i class="bi bi-send-fill"></i> Créer &amp; Envoyer l'email
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- /wiz-box -->
+</div><!-- /wiz-overlay -->
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="bi toast-i" id="toast-i"></i>
+  <span id="toast-msg"></span>
+</div>
+
+
+<script>
+  /* ═══════════════════════════════════════════════════════
+     WIZARD — logique complète
+  ═══════════════════════════════════════════════════════ */
+
+  var wizStep = 1;
+  var wizTotalSteps = 3;
+  var selectedRoleId   = null;
+  var selectedRoleName = null;
+
+  /* ── Ouvrir / Fermer ── */
+  function wizOpen() {
+    wizReset();
+    var el = document.getElementById('wiz-overlay');
+    el.style.display = 'flex';
+    el.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function wizClose() {
+    var el = document.getElementById('wiz-overlay');
+    el.classList.remove('open');
+    el.style.display = '';
+    document.body.style.overflow = '';
+  }
+  document.getElementById('wiz-overlay').addEventListener('click', function(e) {
+    if (e.target === this) wizClose();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') wizClose();
+  });
+
+  /* ── Reset ── */
+  function wizReset() {
+    wizStep = 1;
+    selectedRoleId   = null;
+    selectedRoleName = null;
+
+    /* vider champs */
+    ['f-nom','f-prenom','f-matricule','f-email','f-dob','f-niveau'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    /* supprimer erreurs */
+    document.querySelectorAll('.wf-error').forEach(function(e) { e.classList.remove('show'); });
+    document.querySelectorAll('.wf-input').forEach(function(e) { e.classList.remove('error'); });
+    /* déselectionner rôles */
+    document.querySelectorAll('.role-select-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.querySelectorAll('.wiz-perm-check').forEach(function(c) { c.checked = false; });
+    document.querySelectorAll('.perm-check-card').forEach(function(c) { c.classList.remove('checked'); });
+    document.querySelectorAll('.perms-group').forEach(function(g) { g.style.display = 'none'; });
+    document.getElementById('perms-container').style.display = 'none';
+
+    wizRefreshUI();
+  }
+
+  /* ── Navigation ── */
+  function wizNext() {
+    if (!wizValidateStep(wizStep)) return;
+    if (wizStep < wizTotalSteps) {
+      wizStep++;
+      if (wizStep === 3) wizBuildSummary();
+      wizRefreshUI();
+    }
+  }
+  function wizPrev() {
+    if (wizStep > 1) { wizStep--; wizRefreshUI(); }
+  }
+
+  /* ── Rafraîchir l'UI selon l'étape courante ── */
+  function wizRefreshUI() {
+    /* panneaux */
+    for (var i = 1; i <= wizTotalSteps; i++) {
+      var panel = document.getElementById('wiz-panel-' + i);
+      if (panel) panel.classList.toggle('active', i === wizStep);
+    }
+
+    /* stepper */
+    for (var j = 1; j <= wizTotalSteps; j++) {
+      var ind = document.getElementById('step-ind-' + j);
+      if (!ind) continue;
+      ind.classList.remove('active','done');
+      if (j < wizStep)       ind.classList.add('done');
+      else if (j === wizStep) ind.classList.add('active');
+    }
+    var l12 = document.getElementById('line-1-2');
+    var l23 = document.getElementById('line-2-3');
+    if (l12) l12.classList.toggle('done', wizStep > 1);
+    if (l23) l23.classList.toggle('done', wizStep > 2);
+
+    /* boutons */
+    var btnBack   = document.getElementById('btn-wiz-back');
+    var btnNext   = document.getElementById('btn-wiz-next');
+    var wizForm   = document.getElementById('wiz-form');
+    btnBack.style.display  = wizStep > 1 ? 'flex' : 'none';
+    btnNext.style.display  = wizStep < wizTotalSteps ? 'flex' : 'none';
+    wizForm.style.display  = wizStep === wizTotalSteps ? 'block' : 'none';
+
+    /* info étape */
+    document.getElementById('wiz-step-info').textContent = 'Étape ' + wizStep + ' sur ' + wizTotalSteps;
+
+    /* sous-titre */
+    var subs = ['Renseignez les informations personnelles', 'Attribuez un rôle et ses permissions', 'Vérifiez et envoyez l\'email'];
+    var subEl = document.getElementById('wiz-sub-text');
+    if (subEl) subEl.textContent = subs[wizStep - 1] || '';
+  }
+
+  /* ── Validation par étape ── */
+  function wizValidateStep(step) {
+    var ok = true;
+    if (step === 1) {
+      ok = v('f-nom',       'err-nom',       function(v){ return v.trim().length >= 2; }) && ok;
+      ok = v('f-prenom',    'err-prenom',     function(v){ return v.trim().length >= 2; }) && ok;
+      ok = v('f-matricule', 'err-matricule',  function(v){ return v.trim().length >= 1; }) && ok;
+      ok = v('f-email',     'err-email',      function(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }) && ok;
+      ok = v('f-dob',       'err-dob',        function(val){ return val && new Date(val) < new Date(); }) && ok;
+      ok = v('f-niveau',    'err-niveau',     function(v){ return v !== ''; }) && ok;
+    }
+    if (step === 2) {
+      if (!selectedRoleId) {
+        var errRole = document.getElementById('err-role');
+        if (errRole) errRole.style.display = 'block';
+        ok = false;
+      }
+    }
+    return ok;
+  }
+
+  function v(fieldId, errId, rule) {
+    var field = document.getElementById(fieldId);
+    var err   = document.getElementById(errId);
+    if (!field) return true;
+    var valid = rule(field.value);
+    field.classList.toggle('error', !valid);
+    if (err) err.classList.toggle('show', !valid);
+    return valid;
+  }
+
+  /* ── Sélectionner un rôle ── */
+  function selectRole(card) {
+    /* déselectionner tous */
+    document.querySelectorAll('.role-select-card').forEach(function(c) { c.classList.remove('selected'); });
+    card.classList.add('selected');
+    var radio = card.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
+
+    selectedRoleId   = card.getAttribute('data-role-id');
+    selectedRoleName = card.getAttribute('data-role-name');
+
+    /* masquer erreur rôle */
+    var errRole = document.getElementById('err-role');
+    if (errRole) errRole.style.display = 'none';
+
+    /* afficher les permissions du rôle sélectionné */
+    document.querySelectorAll('[id^="perms-group-"]').forEach(function(g) { g.style.display = 'none'; });
+    var group = document.getElementById('perms-group-' + selectedRoleId);
+    var container = document.getElementById('perms-container');
+    if (group && container) {
+      container.style.display = 'block';
+      group.style.display = 'grid';
+    }
+  }
+
+  /* ── Toggle carte permission ── */
+  function togglePermCard(label) {
+    var cb = label.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    /* le click natif coche/décoche → on synchronise juste la classe */
+    setTimeout(function() {
+      label.classList.toggle('checked', cb.checked);
+    }, 0);
+  }
+
+  /* ── Construire le résumé étape 3 ── */
+  function wizBuildSummary() {
+    var nom       = (document.getElementById('f-nom')       || {}).value || '—';
+    var prenom    = (document.getElementById('f-prenom')    || {}).value || '—';
+    var matricule = (document.getElementById('f-matricule') || {}).value || '—';
+    var email     = (document.getElementById('f-email')     || {}).value || '—';
+    var dob       = (document.getElementById('f-dob')       || {}).value || '—';
+    var niveauEl  = document.getElementById('f-niveau');
+    var niveau    = niveauEl ? (niveauEl.options[niveauEl.selectedIndex] || {}).text || '—' : '—';
+    var roleName  = selectedRoleName ? selectedRoleName.replace('ROLE_','') : '—';
+
+    /* Permissions cochées */
+    var checkedPerms = [];
+    document.querySelectorAll('#perms-group-' + selectedRoleId + ' .wiz-perm-check:checked').forEach(function(cb) {
+      checkedPerms.push(cb.getAttribute('data-perm-desc') || cb.value || '');
+    });
+
+    /* HTML du résumé */
+    var rows = [
+      { k:'Nom complet', v: nom + ' ' + prenom },
+      { k:'Matricule',   v: matricule },
+      { k:'Email',       v: email },
+      { k:'Naissance',   v: dob },
+      { k:'Niveau',      v: niveau },
+      { k:'Rôle',        v: '<span class="confirm-badge role">' + roleName + '</span>' }
+    ];
+    var html = rows.map(function(r) {
+      return '<div class="confirm-row"><span class="confirm-key">' + r.k + '</span><span class="confirm-val">' + r.v + '</span></div>';
+    }).join('');
+
+    /* Permissions */
+    if (checkedPerms.length > 0) {
+      var permsHtml = checkedPerms.map(function(p) {
+        return '<span class="confirm-badge perm"><i class="bi bi-key-fill"></i>' + p + '</span>';
+      }).join(' ');
+      html += '<div class="confirm-row"><span class="confirm-key">Permissions</span><span class="confirm-val" style="flex-wrap:wrap;display:flex;gap:4px;">' + permsHtml + '</span></div>';
+    } else {
+      html += '<div class="confirm-row"><span class="confirm-key">Permissions</span><span class="confirm-val" style="color:#6b7280;font-style:italic;">Aucune permission spécifique</span></div>';
+    }
+
+    document.getElementById('confirm-summary').innerHTML = html;
+
+    /* Aperçu email */
+    document.getElementById('prev-prenom').textContent = prenom;
+    document.getElementById('prev-email').textContent  = email;
+
+    /* Remplir les champs hidden du formulaire */
+    setH('h-nom',       nom);
+    setH('h-prenom',    prenom);
+    setH('h-matricule', matricule);
+    setH('h-email',     email);
+    setH('h-dob',       dob);
+    setH('h-niveau',    niveauEl ? niveauEl.value : '');
+    setH('h-role-id',   selectedRoleId || '');
+
+    /* Permissions → champs hidden multiples */
+    var permsContainer = document.getElementById('h-perms-container');
+    permsContainer.innerHTML = '';
+    document.querySelectorAll('#perms-group-' + selectedRoleId + ' .wiz-perm-check:checked').forEach(function(cb) {
+      var inp = document.createElement('input');
+      inp.type  = 'hidden';
+      inp.name  = 'permissions';
+      inp.value = cb.value;
+      permsContainer.appendChild(inp);
+    });
+  }
+
+  function setH(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+
+  /* ── Toast ── */
+  var _tt = null;
+  function showToast(type, icon, msg) {
+    var t  = document.getElementById('toast');
+    var ti = document.getElementById('toast-i');
+    var tm = document.getElementById('toast-msg');
+    if (_tt) clearTimeout(_tt);
+    t.className  = 'toast ' + type;
+    ti.className = 'bi ' + icon + ' toast-i';
+    tm.textContent = msg;
+    t.classList.add('show');
+    _tt = setTimeout(function() { t.classList.remove('show'); }, 3500);
+  }
+
+  /* Toast depuis URL */
+  (function() {
+    var p = new URLSearchParams(window.location.search);
+    if (p.get('success')) showToast('ok',  'bi-check-circle-fill', decodeURIComponent(p.get('success')));
+    if (p.get('error'))   showToast('err', 'bi-x-circle-fill',     decodeURIComponent(p.get('error')));
+  })();
+
+  /* Init */
+  wizRefreshUI();
+</script>
+
+<div layout:fragment="content"></div>
+
 </body>
 </html>

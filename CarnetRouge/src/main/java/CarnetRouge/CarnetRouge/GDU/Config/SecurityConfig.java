@@ -29,15 +29,24 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final UserDetailsService userDetailsService;
-    private  final RefreshTokenService  refreshTokenService;
-    // Liste des URLs accessibles sans authentification
+    private final RefreshTokenService refreshTokenService;
+
+    // Mise à jour de la liste publique pour inclure les ressources PWA et Statiques
     private static final String[] PUBLIC_URL = {
             "/login",
-            "/notFound",           // Indispensable pour l'affichage de l'erreur
-            "/error",              // Indispensable pour les erreurs Spring Boot par défaut
+            "/notFound",
+            "/error",
             "/api/v1/auth/**",
             "/v3/api-docs/**",
-            "/swagger-ui/**"
+            "/swagger-ui/**",
+            "/css/**",           // Indispensable pour tes styles
+            "/js/**",            // Indispensable pour tes scripts
+            "/images/**",        // Indispensable pour tes icônes
+            "/manifest.json",    // Fichier manifest PWA
+            "/sw.js",            // Service Worker
+            "/icon-512.png",         // Si ton icône est à la racine
+            "/favicon.ico",
+            "/"
     };
 
     @Bean
@@ -62,6 +71,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                // Note : On utilise STATELESS car tu as un JwtFilter.
+                // Assure-toi que tes pages Thymeleaf gèrent bien le token.
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -71,7 +82,7 @@ public class SecurityConfig {
                         .accessDeniedPage("/notFound")
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_URL).permitAll()
+                        .requestMatchers(PUBLIC_URL).permitAll() // On autorise tout ce qui est dans PUBLIC_URL
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/enseignant/**").hasRole("ENSEIGNANT")
                         .requestMatchers("/etudiant/**").hasRole("ETUDIANT")
@@ -80,7 +91,6 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .addLogoutHandler((request, response, authentication) -> {
-                            // Supprime le refresh token en base
                             if (request.getCookies() != null) {
                                 Arrays.stream(request.getCookies())
                                         .filter(c -> "REFRESH_TOKEN".equals(c.getName()))
@@ -92,7 +102,7 @@ public class SecurityConfig {
                                         });
                             }
                         })
-                        .deleteCookies("JWT_TOKEN", "REFRESH_TOKEN") // ← Spring gère la suppression
+                        .deleteCookies("JWT_TOKEN", "REFRESH_TOKEN")
                         .logoutSuccessUrl("/login?logout=true")
                         .permitAll()
                 )

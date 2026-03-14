@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoleDTORequest {
+public class ActivePermissionRequest {
+    private  Long id;
     private Boolean active;
 }

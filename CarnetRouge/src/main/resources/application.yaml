@@ -11,6 +11,12 @@ server:
         max-age: 3600  # 1 heure en secondes
 
 spring:
+  mvc:
+    contentnegotiation:
+      favor-parameter: false
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, classpath:/public/
   application:
     name: CarnetRouge
   mail:

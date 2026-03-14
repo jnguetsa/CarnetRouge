@@ -10,6 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class ActiveUtilisateurRequestDTO {
-
+       private Long id;
        private  boolean active;
 }

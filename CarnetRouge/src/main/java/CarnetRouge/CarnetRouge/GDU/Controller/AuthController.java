@@ -42,10 +42,6 @@ public class AuthController {
         return "notFound";
     }
 
-    @GetMapping("/error")
-    public String handleError(HttpServletRequest request) {
-        return "notFound";
-    }
 
     // ── Dashboards ──
 
@@ -115,7 +111,6 @@ public class AuthController {
         }
     }
 
-    // ── Helpers ──
 
     private String determineTargetUrl(Collection<? extends GrantedAuthority> authorities) {
         String role = authorities.stream()

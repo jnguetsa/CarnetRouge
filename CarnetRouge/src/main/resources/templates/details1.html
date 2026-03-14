@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  >
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.json">
+  <title>CarnetRouge — Détails Utilisateur</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:  ['"DM Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          colors: {
+            bg:          '#0c0c0e',
+            surface:     '#131316',
+            surface2:    '#1a1a1f',
+            borderDim:   'rgba(255,255,255,0.06)',
+            borderHover: 'rgba(220,38,38,0.4)',
+            textMuted:   'rgba(240,240,242,0.45)',
+            redSoft:     '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer components {
+      /* ── Dropdowns ── */
+      .dd-menu {
+        @apply hidden absolute top-[calc(100%+6px)] right-0 z-[400]
+        bg-[#1a1a1f] border border-borderDim rounded-lg
+        min-w-[220px] shadow-[0_10px_36px_rgba(0,0,0,0.65)] overflow-hidden;
+      }
+      .dd-menu.open { @apply block; animation: ddIn 0.14s ease; }
+      .dd-wrap.open .chevron { @apply rotate-180; }
+
+      /* ── Modales ── */
+      .modal-overlay {
+        @apply hidden fixed inset-0 z-[1000]
+        bg-black/75 backdrop-blur-[4px]
+        items-center justify-center;
+      }
+      .modal-overlay.open { @apply flex; }
+
+      /* ── Inputs modales ── */
+      .m-input, .m-select {
+        @apply w-full bg-surface2 border border-borderDim rounded-lg
+        text-gray-100 text-[0.83rem] px-3.5 py-2.5
+        outline-none focus:border-red-600/40 transition-colors;
+      }
+      .m-select option { @apply bg-[#1a1a1f]; }
+
+      /* ── Bouton Delete confirm ── */
+      .btn-del-confirm { @apply opacity-35 pointer-events-none; }
+      .btn-del-confirm.unlocked { @apply opacity-100 pointer-events-auto; }
+
+      /* ── Toggle permission ── */
+      .perm-item.disabled-perm { @apply border-white/[0.07] opacity-50; }
+      .perm-item.disabled-perm .perm-item-label {
+        @apply bg-white/[0.02] text-gray-500 line-through;
+      }
+      .perm-item.disabled-perm .perm-toggle {
+        @apply border-white/[0.07] bg-green-500/5 text-green-500/50
+        hover:bg-green-500/15 hover:text-green-400;
+      }
+
+      /* ── Toast ── */
+      .toast-box {
+        @apply fixed bottom-6 right-6 z-[9999]
+        bg-[#1c1f28] border border-borderDim rounded-[9px]
+        px-4 py-3 flex items-center gap-2.5 text-[0.8rem] text-gray-100
+        shadow-[0_8px_30px_rgba(0,0,0,0.55)]
+        translate-y-[70px] opacity-0 transition-all duration-300 pointer-events-none;
+      }
+      .toast-box.show { @apply translate-y-0 opacity-100; }
+      .toast-box.ok   .t-ico { @apply text-green-400; }
+      .toast-box.err  .t-ico { @apply text-red-400; }
+      .toast-box.info .t-ico { @apply text-sky-400; }
+    }
+
+    /* Lueur rouge en haut */
+    body::before {
+      content: ''; position: fixed; top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 400px;
+      background: radial-gradient(ellipse, rgba(220,38,38,0.07) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    @keyframes ddIn {
+      from { opacity:0; transform:translateY(-5px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes mIn {
+      from { opacity:0; transform:scale(0.94) translateY(-8px); }
+      to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .animate-mIn { animation: mIn 0.2s ease; }
+  </style>
+</head>
+<body class="bg-bg text-gray-100 font-sans min-h-screen relative">
+
+<!-- ══════════════════════════════
+     NAVBAR
+══════════════════════════════ -->
+<nav class="sticky top-0 z-50 flex items-center justify-between px-5 md:px-8 h-16 bg-bg/85 backdrop-blur-md border-b border-borderDim">
+  <a th:href="@{/dashboard}" class="flex items-center gap-3 no-underline">
+    <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.35)]">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+           fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+      </svg>
+    </div>
+    <span class="font-serif text-[1.3rem] font-bold text-gray-100 tracking-tight">
+            Carnet<span class="text-red-500">Rouge</span>
+        </span>
+  </a>
+  <div class="flex items-center gap-3 md:gap-4">
+    <div class="hidden sm:flex items-center gap-2.5 px-3 py-1.5 bg-surface2 border border-borderDim rounded-full text-[0.82rem] text-textMuted">
+      <div class="flex items-center justify-center w-6 h-6 rounded-full bg-red-600/15 border border-red-600/30 font-bold text-[0.7rem] text-red-500">A</div>
+      <span class="font-medium" sec:authentication="name">Admin</span>
+    </div>
+    <span class="hidden sm:inline-block px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-red-500 bg-red-600/10 border border-red-600/25 rounded-full">Admin</span>
+    <a th:href="@{/logout}"
+       class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[0.82rem] font-medium transition-all no-underline shadow-[0_0_0_rgba(220,38,38,0)] hover:shadow-[0_0_16px_rgba(220,38,38,0.4)]">
+      <i class="bi bi-box-arrow-right"></i>
+      <span class="hidden sm:inline">Déconnexion</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════
+     MAIN
+══════════════════════════════ -->
+<main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-8 md:py-10">
+
+  <!-- Retour -->
+  <a th:href="@{/admin/utilisateurs}"
+     class="inline-flex items-center gap-2 px-4 py-2 bg-surface2 border border-borderDim rounded-lg text-textMuted text-[0.82rem] hover:border-borderHover hover:text-redSoft transition-colors mb-7 w-fit no-underline">
+    <i class="bi bi-arrow-left"></i> Retour à la liste
+  </a>
+
+  <!-- En-tête -->
+  <div class="mb-9">
+    <h1 th:if="${type == 'ENSEIGNANT'}"
+        class="font-serif text-[1.8rem] md:text-[2.2rem] font-black text-gray-100 leading-tight tracking-tight mb-1">
+      Profil <span class="text-redSoft">Enseignant</span>
+    </h1>
+    <h1 th:if="${type == 'ASSISTANT'}"
+        class="font-serif text-[1.8rem] md:text-[2.2rem] font-black text-gray-100 leading-tight tracking-tight mb-1">
+      Profil <span class="text-sky-400">Assistant</span>
+    </h1>
+    <p class="text-[0.88rem] text-textMuted font-light mb-3">Informations détaillées du membre du personnel.</p>
+    <span th:if="${type == 'ENSEIGNANT'}"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[0.8rem] font-bold tracking-wider uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <i class="bi bi-mortarboard-fill"></i> Enseignant
+        </span>
+    <span th:if="${type == 'ASSISTANT'}"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[0.8rem] font-bold tracking-wider uppercase bg-sky-500/10 text-sky-400 border border-sky-400/20">
+            <i class="bi bi-person-workspace"></i> Assistant
+        </span>
+  </div>
+
+  <!-- ══ GRID ══ -->
+  <div class="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 items-start">
+
+    <!-- ════════════════════════
+         CARTE PROFIL GAUCHE
+    ════════════════════════ -->
+    <div class="bg-surface border border-borderDim rounded-[14px] p-6 md:p-8 flex flex-col items-center gap-4 shadow-xl shadow-black/20">
+
+      <!-- Avatar -->
+      <div th:if="${type == 'ENSEIGNANT'}"
+           class="w-[90px] h-[90px] rounded-[24px] bg-gradient-to-br from-red-600/20 to-red-600/5 border-2 border-red-600/25 flex items-center justify-center font-serif text-[2.4rem] font-bold text-redSoft"
+           th:text="${details.nom != null ? details.nom.substring(0,1) : 'E'}">E</div>
+      <div th:if="${type == 'ASSISTANT'}"
+           class="w-[90px] h-[90px] rounded-[24px] bg-gradient-to-br from-sky-400/15 to-sky-400/5 border-2 border-sky-400/20 flex items-center justify-center font-serif text-[2.4rem] font-bold text-sky-400"
+           th:text="${details.nom != null ? details.nom.substring(0,1) : 'A'}">A</div>
+
+      <div class="font-serif text-[1.3rem] font-bold text-center text-gray-100"
+           th:text="${details.nom + ' ' + details.prenom}">Nom Prénom</div>
+      <div class="text-[0.8rem] text-textMuted text-center break-all"
+           th:text="${details.email}">email@exemple.com</div>
+
+      <hr class="w-full border-t border-borderDim my-1" />
+
+      <!-- Meta -->
+      <div class="w-full flex flex-col gap-2.5">
+        <div class="flex justify-between items-center text-[0.8rem]">
+          <span class="text-gray-500 uppercase tracking-widest text-[0.68rem] font-bold">Statut</span>
+          <span th:if="${details.active}"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.73rem] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_6px_#22c55e] animate-pulse"></span> Actif
+                    </span>
+          <span th:unless="${details.active}"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.73rem] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span> Inactif
+                    </span>
+        </div>
+        <div class="flex justify-between items-center text-[0.8rem]">
+          <span class="text-gray-500 uppercase tracking-widest text-[0.68rem] font-bold">1ère connexion</span>
+          <span class="font-medium text-gray-100" th:text="${details.firstLogin ? 'Oui' : 'Non'}">—</span>
+        </div>
+        <div class="flex justify-between items-center text-[0.8rem]">
+          <span class="text-gray-500 uppercase tracking-widest text-[0.68rem] font-bold">Créé le</span>
+          <span class="font-medium text-gray-100"
+                th:text="${details.createdAt != null ? #temporals.format(details.createdAt,'dd/MM/yyyy') : '—'}">—</span>
+        </div>
+      </div>
+
+      <!-- ── Actions profil ── -->
+      <div class="w-full flex flex-col gap-2 pt-4 border-t border-borderDim mt-2">
+
+        <!-- Dropdown : Modifier -->
+        <div class="dd-wrap w-full relative">
+          <button type="button"
+                  data-toggle-dd="dd-edit"
+                  class="flex items-center gap-2 w-full px-3.5 py-2.5 bg-transparent border border-borderDim rounded-lg text-textMuted text-[0.78rem] font-semibold hover:border-borderHover hover:text-redSoft hover:bg-red-600/10 transition-all text-left">
+            <i class="bi bi-pencil-square"></i> Modifier le profil
+            <i class="bi bi-chevron-down chevron ml-auto text-[0.6rem] transition-transform duration-200"></i>
+          </button>
+          <div class="dd-menu" id="dd-edit">
+            <button type="button" data-open="m-edit-info" data-close-dds="true"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-textMuted hover:bg-white/5 hover:text-gray-100 transition-colors text-left">
+              <i class="bi bi-person-lines-fill"></i> Modifier les informations
+            </button>
+            <button type="button" data-open="m-reset-pwd" data-close-dds="true"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-textMuted hover:bg-white/5 hover:text-gray-100 transition-colors text-left">
+              <i class="bi bi-key-fill"></i> Réinitialiser le mot de passe
+            </button>
+            <button type="button" data-open="m-change-email" data-close-dds="true"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-textMuted hover:bg-white/5 hover:text-gray-100 transition-colors text-left">
+              <i class="bi bi-envelope-at-fill"></i> Changer l'email
+            </button>
+          </div>
+        </div>
+
+        <!-- Ajouter un rôle -->
+        <button type="button" data-open="m-add-role"
+                class="flex items-center gap-2 w-full px-3.5 py-2.5 bg-transparent border border-borderDim rounded-lg text-textMuted text-[0.78rem] font-semibold hover:border-borderHover hover:text-redSoft hover:bg-red-600/10 transition-all text-left">
+          <i class="bi bi-shield-plus"></i> Ajouter un rôle
+        </button>
+
+        <!-- Dropdown : Statut -->
+        <div class="dd-wrap w-full relative">
+          <button type="button"
+                  data-toggle-dd="dd-status"
+                  class="flex items-center gap-2 w-full px-3.5 py-2.5 bg-transparent border border-red-500/20 rounded-lg text-red-400 text-[0.78rem] font-semibold hover:border-red-500/40 hover:bg-red-500/10 transition-all text-left">
+            <i class="bi bi-person-slash"></i> Gestion du statut
+            <i class="bi bi-chevron-down chevron ml-auto text-[0.6rem] transition-transform duration-200"></i>
+          </button>
+          <div class="dd-menu" id="dd-status">
+            <button type="button" data-open="m-deactivate" data-close-dds="true"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-textMuted hover:bg-white/5 hover:text-gray-100 transition-colors text-left">
+              <i class="bi bi-person-slash"></i> Désactiver le compte
+            </button>
+            <button type="button" data-open="m-activate" data-close-dds="true"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-green-400 hover:bg-green-500/10 transition-colors text-left">
+              <i class="bi bi-person-check-fill"></i> Activer le compte
+            </button>
+            <hr class="border-t border-borderDim my-1" />
+            <button type="button" data-open="m-delete-user" data-close-dds="true"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-red-400 hover:bg-red-500/10 transition-colors text-left">
+              <i class="bi bi-trash3-fill"></i> Supprimer le compte
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════════════════════════
+         CARTES DROITE
+    ════════════════════════ -->
+    <div class="flex flex-col gap-6">
+
+      <!-- Informations personnelles -->
+      <div class="bg-surface border border-borderDim rounded-[14px] overflow-hidden shadow-lg shadow-black/20">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-borderDim bg-white/[0.02]">
+          <div class="w-8 h-8 rounded-lg bg-red-600/10 border border-red-600/20 flex items-center justify-center text-redSoft text-[0.85rem] shrink-0">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <span class="text-[0.75rem] font-bold uppercase tracking-widest text-textMuted">Informations personnelles</span>
+          <button type="button" data-open="m-edit-info"
+                  class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-borderDim rounded-lg text-textMuted text-[0.72rem] font-semibold hover:border-sky-400/40 hover:text-sky-400 hover:bg-sky-400/10 transition-all">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Nom</div>
+            <div class="text-[0.88rem] font-medium text-gray-100" th:text="${details.nom}">—</div>
+          </div>
+          <div>
+            <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Prénom</div>
+            <div class="text-[0.88rem] font-medium text-gray-100" th:text="${details.prenom}">—</div>
+          </div>
+          <div>
+            <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Date de naissance</div>
+            <div class="text-[0.88rem] font-medium text-gray-100"
+                 th:text="${details.dateNaissance != null ? #dates.format(details.dateNaissance,'dd/MM/yyyy') : '—'}">—</div>
+          </div>
+          <div>
+            <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Téléphone</div>
+            <div class="text-[0.88rem] font-medium"
+                 th:text="${details.telephone != null ? details.telephone : '—'}"
+                 th:classappend="${details.telephone == null} ? 'text-gray-500 italic' : 'text-gray-100'">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations académiques (Enseignant) -->
+      <div th:if="${type == 'ENSEIGNANT'}" class="bg-surface border border-borderDim rounded-[14px] overflow-hidden shadow-lg shadow-black/20">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-borderDim bg-white/[0.02]">
+          <div class="w-8 h-8 rounded-lg bg-red-600/10 border border-red-600/20 flex items-center justify-center text-redSoft text-[0.85rem] shrink-0">
+            <i class="bi bi-mortarboard-fill"></i>
+          </div>
+          <span class="text-[0.75rem] font-bold uppercase tracking-widest text-textMuted">Informations académiques</span>
+          <button type="button" data-open="m-edit-academic"
+                  class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-borderDim rounded-lg text-textMuted text-[0.72rem] font-semibold hover:border-sky-400/40 hover:text-sky-400 hover:bg-sky-400/10 transition-all">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Grade</div>
+            <div class="text-[0.88rem] font-medium"
+                 th:text="${details.grade != null ? details.grade : '—'}"
+                 th:classappend="${details.grade == null} ? 'text-gray-500 italic' : 'text-gray-100'">—</div>
+          </div>
+          <div>
+            <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Catégorie</div>
+            <div class="text-[0.88rem] font-medium"
+                 th:text="${details.typeEnseignant != null ? details.typeEnseignant : '—'}"
+                 th:classappend="${details.typeEnseignant == null} ? 'text-gray-500 italic' : 'text-gray-100'">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fonction (Assistant) -->
+      <div th:if="${type == 'ASSISTANT'}" class="bg-surface border border-borderDim rounded-[14px] overflow-hidden shadow-lg shadow-black/20">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-borderDim bg-white/[0.02]">
+          <div class="w-8 h-8 rounded-lg bg-sky-400/10 border border-sky-400/20 flex items-center justify-center text-sky-400 text-[0.85rem] shrink-0">
+            <i class="bi bi-person-workspace"></i>
+          </div>
+          <span class="text-[0.75rem] font-bold uppercase tracking-widest text-textMuted">Fonction</span>
+          <button type="button" data-open="m-edit-fonction"
+                  class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-borderDim rounded-lg
+                  text-textMuted text-[0.72rem] font-semibold hover:border-sky-400/40 hover:text-sky-400 hover:bg-sky-400/10 transition-all">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1">Fonction occupée</div>
+          <div class="text-[0.88rem] font-medium"
+               th:text="${details.fonction != null ? details.fonction : '—'}"
+               th:classappend="${details.fonction == null} ? 'text-gray-500 italic' : 'text-gray-100'">—</div>
+        </div>
+      </div>
+
+      <!-- ══ RÔLES & PERMISSIONS ══ -->
+      <div class="bg-surface border border-borderDim rounded-[14px] overflow-hidden shadow-lg shadow-black/20">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-borderDim bg-white/[0.02] flex-wrap">
+          <div class="w-8 h-8 rounded-lg bg-red-600/10 border border-red-600/20 flex items-center justify-center text-redSoft text-[0.85rem] shrink-0">
+            <i class="bi bi-shield-fill"></i>
+          </div>
+          <span class="text-[0.75rem] font-bold uppercase tracking-widest text-textMuted">Rôles &amp; Permissions</span>
+
+          <div class="ml-auto flex items-center gap-2">
+            <!-- Dropdown Gérer -->
+            <div class="dd-wrap relative">
+              <button type="button" data-toggle-dd="dd-perms"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-borderDim rounded-lg text-textMuted text-[0.72rem] font-semibold hover:border-borderHover hover:text-redSoft hover:bg-red-600/10 transition-all">
+                <i class="bi bi-sliders"></i> Gérer
+                <i class="bi bi-chevron-down chevron text-[0.6rem] transition-transform duration-200"></i>
+              </button>
+              <div class="dd-menu" id="dd-perms">
+                <button type="button" data-open="m-disable-perms" data-close-dds="true"
+                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-textMuted hover:bg-white/5 hover:text-gray-100 transition-colors text-left">
+                  <i class="bi bi-slash-circle"></i> Désactiver des permissions
+                </button>
+                <button type="button" data-open="m-enable-perms" data-close-dds="true"
+                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] text-textMuted hover:bg-white/5 hover:text-gray-100 transition-colors text-left">
+                  <i class="bi bi-check-circle"></i> Réactiver des permissions
+                </button>
+              </div>
+            </div>
+            <!-- Ajouter un rôle -->
+            <button type="button" data-open="m-add-role"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-red-500/25 rounded-lg text-redSoft text-[0.72rem] font-semibold hover:border-red-500/45 hover:bg-red-600/10 transition-all">
+              <i class="bi bi-plus-lg"></i> Ajouter un rôle
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6 flex flex-col gap-4">
+          <p th:if="${details.roles == null or details.roles.empty}"
+             class="text-gray-500 text-[0.82rem] italic m-0">Aucun rôle assigné</p>
+
+          <div th:each="role : ${details.roles}" class="border border-borderDim rounded-xl overflow-hidden">
+
+            <!-- Header rôle -->
+            <div class="flex items-center gap-2.5 flex-wrap px-4 py-3 bg-red-600/[0.04] border-b border-borderDim">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/10 border border-red-600/20 rounded-md text-[0.72rem] font-bold text-redSoft uppercase tracking-wider">
+                                <i class="bi bi-shield-check"></i>
+                                <span th:text="${role.name != null ? #strings.replace(role.name,'ROLE_','') : 'INCONNU'}">ROLE</span>
+                            </span>
+              <span class="text-[0.68rem] text-gray-400 bg-white/[0.04] border border-borderDim rounded-full px-2.5 py-0.5"
+                    th:text="${role.permissions != null ? role.permissions.size() + ' permission(s)' : '0 permission(s)'}">0 permission(s)</span>
+              <span th:if="${role.active != null and role.active}"
+                    class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">Actif</span>
+              <span th:if="${role.active != null and !role.active}"
+                    class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Inactif</span>
+
+              <!-- Retirer ce rôle — data-role passé via th:attr -->
+              <button type="button"
+                      class="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 bg-transparent border border-red-400/20 rounded-md text-[0.68rem] text-red-400 font-semibold hover:bg-red-500/10 hover:border-red-400/45 transition-colors btn-remove-role"
+                      th:attr="data-role=${role.name}">
+                <i class="bi bi-x-lg"></i> Retirer
+              </button>
+            </div>
+
+            <!-- Permissions du rôle -->
+            <div class="px-4 py-3.5">
+              <div class="text-[0.62rem] font-bold uppercase tracking-widest text-gray-500 mb-3 flex items-center gap-1.5">
+                <i class="bi bi-key-fill text-amber-500/60"></i> Permissions associées
+              </div>
+              <div th:if="${role.permissions != null and !role.permissions.empty}" class="flex flex-wrap gap-1.5">
+                <div th:each="perm : ${role.permissions}"
+                     class="perm-item inline-flex items-stretch rounded border border-amber-500/20 overflow-hidden"
+                     th:id="${'pi-' + perm.name}">
+                  <div class="perm-item-label flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 text-[0.68rem] text-amber-500/90 transition-all">
+                    <i class="bi bi-key-fill"></i>
+                    <span th:text="${perm.description != null ? perm.description : perm.name}">Permission</span>
+                  </div>
+                  <!-- Toggle perm — data-perm via th:attr -->
+                  <button type="button"
+                          class="perm-toggle flex items-center justify-center w-6 border-l border-amber-500/20 bg-amber-500/5 text-amber-500/60 hover:bg-amber-500/15 hover:text-amber-500 transition-all outline-none btn-toggle-perm"
+                          th:attr="data-perm=${perm.name}"
+                          title="Désactiver">
+                    <i class="bi bi-slash-circle text-[0.62rem]"></i>
+                  </button>
+                </div>
+              </div>
+              <p th:if="${role.permissions == null or role.permissions.empty}"
+                 class="text-[0.72rem] text-gray-500 italic m-0 flex items-center gap-1.5">
+                <i class="bi bi-info-circle"></i> Aucune permission pour ce rôle
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /cartes droite -->
+  </div><!-- /grid -->
+</main>
+
+
+<!-- ══════════════════════════════════════════════
+     MODALES
+     Toutes utilisent data-close="id" pour fermer
+══════════════════════════════════════════════ -->
+
+<!-- Modifier informations personnelles -->
+<div class="modal-overlay" id="m-edit-info">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] max-h-[90vh] overflow-y-auto animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-sky-400/10 text-sky-400 border border-sky-400/20"><i class="bi bi-person-lines-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Modifier les informations</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Données personnelles du membre</div>
+      </div>
+      <button type="button" data-close="m-edit-info"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 text-[0.95rem] cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form  method="post">
+      <input type="hidden" name="_method" value="PUT" />
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nom</div>
+        <input class="m-input" type="text" name="nom"  placeholder="Nom" />
+      </div>
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Prénom</div>
+        <input class="m-input" type="text" name="prenom"  placeholder="Prénom" />
+      </div>
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Date de naissance</div>
+        <input class="m-input" style="color-scheme:dark;" type="date" name="dateNaissance"
+                />
+      </div>
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Téléphone</div>
+        <input class="m-input" type="text" name="telephone" placeholder="+237 6XX XXX XXX" />
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-edit-info"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white transition-colors">
+          <i class="bi bi-check2"></i> Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Informations académiques -->
+<div class="modal-overlay" id="m-edit-academic">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] max-h-[90vh] overflow-y-auto animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-red-600/10 text-redSoft border border-red-600/20"><i class="bi bi-mortarboard-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Informations académiques</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Grade et catégorie de l'enseignant</div>
+      </div>
+      <button type="button" data-close="m-edit-academic"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form  method="post">
+      <input type="hidden" name="_method" value="PUT" />
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Grade</div>
+        <select class="m-select appearance-none" name="grade">
+          <option value="">-- Sélectionner --</option>
+          <option >Assistant</option>
+          <option >Chargé de cours</option>
+          <option >Maître de conférences</option>
+          <option >Professeur</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Catégorie</div>
+        <select class="m-select appearance-none" name="typeEnseignant">
+          <option value="">-- Sélectionner --</option>
+          <option >Permanent</option>
+          <option >Vacataire</option>
+          <option >Associé</option>
+        </select>
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-edit-academic"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-redSoft hover:bg-[#b91c1c] text-white transition-colors">
+          <i class="bi bi-check2"></i> Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Fonction (Assistant) -->
+<div class="modal-overlay" id="m-edit-fonction">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] max-h-[90vh] overflow-y-auto animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-sky-400/10 text-sky-400 border border-sky-400/20"><i class="bi bi-person-workspace"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Modifier la fonction</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Fonction occupée par l'assistant</div>
+      </div>
+      <button type="button" data-close="m-edit-fonction"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form th:action="@{/admin/utilisateurs/{id}/edit-fonction(id=${details.id})}" method="post">
+      <input type="hidden" name="_method" value="PUT" />
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Fonction</div>
+        <select class="m-select appearance-none" name="fonction">
+          <option value="">-- Sélectionner --</option>
+          <option  >Secrétaire</option>
+          <option    >Comptable</option>
+          <option >Informaticien</option>
+          <option   >Gestionnaire</option>
+          <option    >Autre</option>
+        </select>
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-edit-fonction"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white transition-colors">
+          <i class="bi bi-check2"></i> Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Ajouter un rôle -->
+<div class="modal-overlay" id="m-add-role">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] max-h-[90vh] overflow-y-auto animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-red-600/10 text-redSoft border border-red-600/20"><i class="bi bi-shield-plus"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Ajouter un rôle</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Assigner un nouveau rôle à l'utilisateur</div>
+      </div>
+      <button type="button" data-close="m-add-role"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form  method="post">
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Rôle à assigner</div>
+        <select class="m-select appearance-none" name="roleId" required>
+          <option value="">-- Choisir un rôle --</option>
+          <option th:each="role : ${availableRoles}"
+                  th:value="${role.id}"
+                  th:text="${role.name != null ? #strings.replace(role.name,'ROLE_','') : ''}">ROLE</option>
+        </select>
+        <div class="text-[0.72rem] text-gray-500 mt-1.5">Seuls les rôles non encore attribués sont affichés.</div>
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-add-role"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-redSoft hover:bg-[#b91c1c] text-white transition-colors">
+          <i class="bi bi-shield-check"></i> Assigner
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmer retrait rôle -->
+<div class="modal-overlay" id="m-remove-role">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-orange-500/10 text-orange-400 border border-orange-500/20"><i class="bi bi-shield-x"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Retirer le rôle</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]" id="lbl-remove-role">Confirmation</div>
+      </div>
+      <button type="button" data-close="m-remove-role"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="bg-red-400/5 border border-red-400/15 rounded-lg p-3.5 text-[0.8rem] text-gray-400 mb-5 leading-relaxed">
+      Les permissions liées à ce rôle ne seront plus accessibles pour cet utilisateur.
+    </div>
+    <form  method="post">
+      <input type="hidden" id="inp-role-name" name="roleName" value="" />
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-remove-role"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#ea580c] hover:bg-[#c2410c] text-white transition-colors">
+          <i class="bi bi-shield-x"></i> Retirer le rôle
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Désactiver des permissions -->
+<div class="modal-overlay" id="m-disable-perms">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] max-h-[90vh] overflow-y-auto animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/20"><i class="bi bi-slash-circle"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Désactiver des permissions</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Sélectionnez les permissions à désactiver</div>
+      </div>
+      <button type="button" data-close="m-disable-perms"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form  method="post">
+      <div class="mb-4">
+        <div class="flex flex-col gap-1 max-h-[190px] overflow-y-auto border border-borderDim rounded-lg p-2 bg-surface2">
+          <th:block th:each="role : ${details.roles}">
+            <th:block th:each="perm : ${role.permissions}">
+              <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md cursor-pointer hover:bg-white/5 transition-colors">
+                <input type="checkbox" name="permissions" th:value="${perm.name}" class="accent-redSoft w-3.5 h-3.5 shrink-0" />
+                <span class="text-[0.77rem] text-gray-400" th:text="${perm.description != null ? perm.description : perm.name}">Permission</span>
+              </label>
+            </th:block>
+          </th:block>
+        </div>
+        <div class="text-[0.72rem] text-gray-500 mt-1.5">Les permissions désactivées restent visibles mais inactives.</div>
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-disable-perms"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#d97706] hover:bg-[#b45309] text-white transition-colors">
+          <i class="bi bi-slash-circle"></i> Désactiver
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Réactiver des permissions -->
+<div class="modal-overlay" id="m-enable-perms">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] max-h-[90vh] overflow-y-auto animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-green-500/10 text-green-400 border border-green-500/20"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Réactiver des permissions</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Sélectionnez les permissions à réactiver</div>
+      </div>
+      <button type="button" data-close="m-enable-perms"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form  method="post">
+      <div class="mb-4">
+        <div class="flex flex-col gap-1 max-h-[190px] overflow-y-auto border border-borderDim rounded-lg p-2 bg-surface2">
+          <th:block th:each="role : ${details.roles}">
+            <th:block th:each="perm : ${role.permissions}">
+              <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md cursor-pointer hover:bg-white/5 transition-colors">
+                <input type="checkbox" name="permissions" th:value="${perm.name}" class="accent-redSoft w-3.5 h-3.5 shrink-0" />
+                <span class="text-[0.77rem] text-gray-400" th:text="${perm.description != null ? perm.description : perm.name}">Permission</span>
+              </label>
+            </th:block>
+          </th:block>
+        </div>
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-enable-perms"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#16a34a] hover:bg-[#15803d] text-white transition-colors">
+          <i class="bi bi-check-circle"></i> Réactiver
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Réinitialiser le mot de passe -->
+<div class="modal-overlay" id="m-reset-pwd">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/20"><i class="bi bi-key-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Réinitialiser le mot de passe</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Un mot de passe temporaire sera envoyé</div>
+      </div>
+      <button type="button" data-close="m-reset-pwd"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="bg-red-400/5 border border-red-400/15 rounded-lg p-3.5 text-[0.8rem] text-gray-400 mb-5 leading-relaxed">
+      L'utilisateur recevra un email avec son nouveau mot de passe temporaire et devra le changer à la prochaine connexion.
+    </div>
+    <form  method="post">
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-reset-pwd"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#d97706] hover:bg-[#b45309] text-white transition-colors">
+          <i class="bi bi-key"></i> Réinitialiser
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Changer l'email -->
+<div class="modal-overlay" id="m-change-email">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-sky-400/10 text-sky-400 border border-sky-400/20"><i class="bi bi-envelope-at-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Changer l'email</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">Nouvelle adresse de connexion</div>
+      </div>
+      <button type="button" data-close="m-change-email"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form  method="post">
+      <input type="hidden" name="_method" value="PUT" />
+      <div class="mb-4">
+        <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nouvel email</div>
+        <input class="m-input" type="email" name="email" placeholder="nouvelle@adresse.cm" required />
+      </div>
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-change-email"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white transition-colors">
+          <i class="bi bi-check2"></i> Mettre à jour
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Désactiver le compte -->
+<div class="modal-overlay" id="m-deactivate">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-orange-500/10 text-orange-400 border border-orange-500/20"><i class="bi bi-person-slash"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Désactiver le compte</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">L'utilisateur ne pourra plus se connecter</div>
+      </div>
+      <button type="button" data-close="m-deactivate"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="bg-red-400/5 border border-red-400/15 rounded-lg p-3.5 text-[0.8rem] text-gray-400 mb-5 leading-relaxed">
+      Le compte sera suspendu mais toutes les données seront conservées. Il peut être réactivé à tout moment.
+    </div>
+    <form  method="post">
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-deactivate"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#ea580c] hover:bg-[#c2410c] text-white transition-colors">
+          <i class="bi bi-person-slash"></i> Désactiver
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Activer le compte -->
+<div class="modal-overlay" id="m-activate">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-green-500/10 text-green-400 border border-green-500/20"><i class="bi bi-person-check-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Activer le compte</div>
+        <div class="text-[0.77rem] text-gray-400 mt-[3px]">L'utilisateur pourra à nouveau se connecter</div>
+      </div>
+      <button type="button" data-close="m-activate"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form action="" method="post">
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-activate"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-[#16a34a] hover:bg-[#15803d] text-white transition-colors">
+          <i class="bi bi-person-check"></i> Activer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Supprimer le compte -->
+<div class="modal-overlay" id="m-delete-user">
+  <div class="bg-surface border border-white/10 rounded-[14px] p-7 w-[460px] max-w-[95vw] animate-mIn shadow-2xl">
+    <div class="flex items-start gap-3 mb-6">
+      <div class="w-[38px] h-[38px] rounded-xl shrink-0 flex items-center justify-center bg-red-500/10 text-red-400 border border-red-500/25"><i class="bi bi-trash3-fill"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="font-serif text-[1rem] font-bold text-gray-100">Supprimer le compte</div>
+        <div class="text-[0.77rem] text-red-400 mt-[3px]">Action irréversible</div>
+      </div>
+      <button type="button" data-close="m-delete-user"
+              class="ml-auto shrink-0 bg-transparent border-none text-gray-500 cursor-pointer p-1.5 rounded-md hover:text-gray-100 hover:bg-white/5 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="bg-red-400/5 border border-red-400/15 rounded-lg p-3.5 text-[0.8rem] text-gray-400 mb-5 leading-relaxed">
+      Toutes les données seront <strong class="text-red-400">définitivement supprimées</strong>. Cette action est irréversible.
+    </div>
+    <div class="mb-4">
+      <div class="text-[0.68rem] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+        Tapez <strong class="text-gray-200">SUPPRIMER</strong> pour confirmer
+      </div>
+      <input class="m-input" type="text" id="inp-delete-confirm"
+             placeholder="SUPPRIMER" autocomplete="off" />
+    </div>
+    <form method="post">
+      <input type="hidden" name="_method" value="DELETE" />
+      <div class="flex gap-2.5 mt-6 justify-end">
+        <button type="button" data-close="m-delete-user"
+                class="px-4 py-2 rounded-lg text-[0.78rem] font-semibold bg-transparent border border-borderDim text-textMuted hover:border-borderHover hover:text-gray-100 transition-colors">Annuler</button>
+        <button type="submit" id="btn-del"
+                class="btn-del-confirm flex items-center gap-1.5 px-5 py-2 rounded-lg text-[0.78rem] font-bold bg-red-600 hover:bg-red-700 text-white transition-colors">
+          <i class="bi bi-trash3"></i> Supprimer définitivement
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-box" id="toast">
+  <i class="bi t-ico text-[1rem]" id="toast-i"></i>
+  <span id="toast-msg"></span>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     SCRIPTS — 100% data-* driven, zéro onclick inline
+══════════════════════════════════════════════════ -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ═══════════════════════════════════════
+       DÉLÉGATION GLOBALE — un seul listener
+    ═══════════════════════════════════════ */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-open],[data-close],[data-toggle-dd]');
+
+      /* Clic en dehors d'un dropdown → fermer */
+      if (!e.target.closest('.dd-wrap')) closeDds();
+
+      if (!btn) return;
+
+      /* 1. Ouvrir une modale */
+      if (btn.dataset.open) {
+        openM(btn.dataset.open);
+      }
+
+      /* 2. Fermer une modale */
+      if (btn.dataset.close) {
+        closeM(btn.dataset.close);
+      }
+
+      /* 3. Toggle dropdown */
+      if (btn.dataset.toggleDd) {
+        e.stopPropagation(); /* évite la fermeture immédiate */
+        toggleDd(btn.dataset.toggleDd, btn);
+      }
+
+      /* 4. Fermer tous les dropdowns en même temps (si data-close-dds présent) */
+      if (btn.hasAttribute('data-close-dds')) {
+        closeDds();
+      }
+    });
+
+    /* Clic overlay → fermer la modale */
+    document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeM(overlay.id);
+      });
+    });
+
+    /* Escape → fermer modales */
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal-overlay.open').forEach(function (m) {
+        closeM(m.id);
+      });
+    });
+
+    /* ── Boutons "Retirer rôle" ── */
+    document.querySelectorAll('.btn-remove-role').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var roleName = btn.getAttribute('data-role') || '';
+        var label    = roleName.replace('ROLE_', '');
+        var inp      = document.getElementById('inp-role-name');
+        var lbl      = document.getElementById('lbl-remove-role');
+        if (inp) inp.value = roleName;
+        if (lbl) lbl.textContent = 'Retirer : ' + label;
+        openM('m-remove-role');
+      });
+    });
+
+    /* ── Toggle permission ── */
+    document.querySelectorAll('.btn-toggle-perm').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var permName = btn.getAttribute('data-perm');
+        var item     = document.getElementById('pi-' + permName);
+        if (!item) return;
+        var isDisabled = item.classList.contains('disabled-perm');
+        if (isDisabled) {
+          item.classList.remove('disabled-perm');
+          btn.title     = 'Désactiver';
+          btn.innerHTML = '<i class="bi bi-slash-circle text-[0.62rem]"></i>';
+          showToast('ok', 'bi-check-circle-fill', 'Permission réactivée');
+        } else {
+          item.classList.add('disabled-perm');
+          btn.title     = 'Réactiver';
+          btn.innerHTML = '<i class="bi bi-arrow-counterclockwise text-[0.62rem]"></i>';
+          showToast('info', 'bi-slash-circle', 'Permission désactivée');
+        }
+      });
+    });
+
+    /* ── Confirmation suppression (saisie SUPPRIMER) ── */
+    var delInput = document.getElementById('inp-delete-confirm');
+    var delBtn   = document.getElementById('btn-del');
+    if (delInput && delBtn) {
+      delInput.addEventListener('input', function () {
+        if (delInput.value === 'SUPPRIMER') {
+          delBtn.classList.add('unlocked');
+        } else {
+          delBtn.classList.remove('unlocked');
+        }
+      });
+    }
+
+    /* ── Toast depuis URL ── */
+    var p = new URLSearchParams(window.location.search);
+    if (p.get('success')) showToast('ok',  'bi-check-circle-fill', decodeURIComponent(p.get('success')));
+    if (p.get('error'))   showToast('err', 'bi-x-circle-fill',     decodeURIComponent(p.get('error')));
+
+  }); /* fin DOMContentLoaded */
+
+
+  /* ════════════════════════
+     FONCTIONS UTILITAIRES
+  ════════════════════════ */
+
+  function openM(id) {
+    var el = document.getElementById(id);
+    if (!el) { console.warn('Modal introuvable :', id); return; }
+    el.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeM(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function toggleDd(id, triggerBtn) {
+    var menu    = document.getElementById(id);
+    if (!menu) return;
+    var wasOpen = menu.classList.contains('open');
+    closeDds();
+    if (!wasOpen) {
+      menu.classList.add('open');
+      if (triggerBtn) {
+        var wrap = triggerBtn.closest('.dd-wrap');
+        if (wrap) wrap.classList.add('open');
+      }
+    }
+  }
+
+  function closeDds() {
+    document.querySelectorAll('.dd-menu.open').forEach(function (m)  { m.classList.remove('open'); });
+    document.querySelectorAll('.dd-wrap.open').forEach(function (w)  { w.classList.remove('open'); });
+  }
+
+  var _tt = null;
+  function showToast(type, icon, msg) {
+    var t  = document.getElementById('toast');
+    var ti = document.getElementById('toast-i');
+    var tm = document.getElementById('toast-msg');
+    if (!t) return;
+    if (_tt) clearTimeout(_tt);
+    /* Reset classes */
+    t.className = 'toast-box ' + type;
+    ti.className = 'bi ' + icon + ' t-ico text-[1rem]';
+    tm.textContent = msg;
+    /* Afficher */
+    setTimeout(function () { t.classList.add('show'); }, 10);
+    _tt = setTimeout(function () { t.classList.remove('show'); }, 3500);
+  }
+</script>
+
+</body>
+</html>

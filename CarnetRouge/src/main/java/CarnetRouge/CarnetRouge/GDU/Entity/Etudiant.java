@@ -1,10 +1,7 @@
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
 import CarnetRouge.CarnetRouge.GDU.Enum.TypeNiveau;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -14,11 +11,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@DiscriminatorValue("ETU") // ✅ discriminator pour SINGLE_TABLE
+@DiscriminatorValue("ETU")
 public class Etudiant extends Utilisateurs {
-
-    private String matricule; // ✅ minuscule (convention Java)
-
-    @Enumerated(EnumType.STRING) // ✅ stocke le nom de l'enum en BDD
-    private TypeNiveau niveau; // ✅ minuscule
+    @Column(unique = true, nullable = false)
+    private String matricule;
+    @Column(unique = true, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TypeNiveau niveau;
 }

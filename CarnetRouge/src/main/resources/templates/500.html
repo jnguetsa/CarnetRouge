@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark"
       xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
     <title>CarnetRouge - Erreur serveur</title>
     <link rel="stylesheet" th:href="@{/css/output.css}">
 </head>
 <body class="bg-base-200 min-h-screen flex items-center justify-center">
 
-<div class="text-center px-6">
+<div layout:fragment="content" class="text-center px-6">
 
-    <!-- Icône -->
     <div class="flex justify-center mb-6">
         <div class="w-24 h-24 bg-orange-700 rounded-full flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
@@ -24,33 +25,27 @@
         </div>
     </div>
 
-    <!-- Code erreur -->
     <h1 class="text-9xl font-extrabold text-orange-500 mb-2">500</h1>
 
-    <!-- Message -->
     <h2 class="text-2xl font-bold text-base-content mb-3">Erreur interne du serveur</h2>
     <p class="text-base-content/60 max-w-md mx-auto mb-8">
         Une erreur inattendue s'est produite. Nos équipes ont été notifiées.
         Veuillez réessayer dans quelques instants.
     </p>
 
-    <!-- Boutons -->
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
 
-        <!-- Retour arrière -->
         <button onclick="history.back()"
                 class="btn btn-outline border-orange-700 text-orange-400 hover:bg-orange-700 hover:text-white hover:border-orange-700">
             ← Retour
         </button>
 
-        <!-- Vers le dashboard si connecté -->
         <a sec:authorize="isAuthenticated()"
            th:href="@{/admin/dashboard}"
            class="btn bg-orange-700 hover:bg-orange-600 text-white border-none">
             Tableau de bord
         </a>
 
-        <!-- Vers le login si non connecté -->
         <a sec:authorize="isAnonymous()"
            th:href="@{/login}"
            class="btn bg-orange-700 hover:bg-orange-600 text-white border-none">
@@ -59,7 +54,6 @@
 
     </div>
 
-    <!-- Logo en bas -->
     <div class="mt-12 flex items-center justify-center gap-2 text-base-content/40">
         <div class="w-5 h-5 bg-red-700 rounded-full flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
@@ -71,6 +65,8 @@
     </div>
 
 </div>
+<div layout:fragment="content"></div>
 
 </body>
+
 </html>
