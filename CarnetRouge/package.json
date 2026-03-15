@@ -1,19 +1,21 @@
 {
   "name": "carnetrouge",
   "version": "1.0.0",
-  "description": "Carnet Rouge",
-  "main": "app.js",
+  "main": "index.js",
   "scripts": {
-    "tailwind:watch": "npx tailwindcss -i ./src/main/resources/static/css/input.css -o ./src/main/resources/static/css/output.css --watch",
-    "tailwind:minify": "npx tailwindcss -i ./src/main/resources/static/css/input.css -o ./src/main/resources/static/css/output.css --minify"
+    "tw": "npx @tailwindcss/cli -i ./src/main/resources/static/css/input.css -o ./src/main/resources/static/css/output.css --watch",
+    "tm": "npx @tailwindcss/cli -i ./src/main/resources/static/css/input.css -o ./src/main/resources/static/css/output.css --minify"
+
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
     "@tailwindcss/cli": "^4.2.1",
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
-    "daisyui": "^5.5.18"
+    "daisyui": "^5.5.19"
   }
 }

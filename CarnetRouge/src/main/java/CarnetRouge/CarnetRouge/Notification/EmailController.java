@@ -15,7 +15,7 @@ public class EmailController {
         this.mailSender = mailSender;
     }
 
-    @GetMapping("/admin/test-email")
+    //@GetMapping("/ad/test-email")
     public String envoyerBonjour() {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

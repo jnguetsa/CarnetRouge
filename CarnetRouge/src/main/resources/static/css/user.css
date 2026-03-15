@@ -508,3 +508,265 @@ td {
     .stat-card { min-width: unset; width: 100%; }
     .th-specs, .td-specs { display: none; }
 }
+
+
+
+     /* ══════════════════════════════════════════
+        WIZARD MODAL — styles autonomes
+     ══════════════════════════════════════════ */
+
+     /* Overlay */
+ .wiz-overlay {
+     display: none;
+     position: fixed; inset: 0; z-index: 1000;
+     background: rgba(0,0,0,0.75);
+     backdrop-filter: blur(5px);
+     align-items: center; justify-content: center;
+ }
+.wiz-overlay.open { display: flex; }
+
+/* Boîte principale */
+.wiz-box {
+    background: #111318;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px;
+    width: 540px; max-width: 96vw;
+    max-height: 92vh; overflow-y: auto;
+    animation: wizIn 0.22s ease;
+}
+@keyframes wizIn {
+    from { opacity:0; transform:scale(0.94) translateY(-10px); }
+    to   { opacity:1; transform:scale(1)    translateY(0);     }
+}
+
+/* En-tête wizard */
+.wiz-head {
+    padding: 24px 28px 0;
+    display: flex; align-items: flex-start; gap: 14px;
+}
+.wiz-ico {
+    width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    background: rgba(220,38,38,0.12); color: #dc2626;
+    border: 1px solid rgba(220,38,38,0.22);
+}
+.wiz-titles { flex: 1; }
+.wiz-title   { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; color:#f0f0f0; }
+.wiz-sub     { font-size:0.77rem; color:#9ca3af; margin-top:3px; }
+.wiz-close-btn {
+    background: none; border: none; color: #6b7280; font-size: 0.95rem;
+    cursor: pointer; padding: 4px 6px; border-radius: 5px;
+    transition: color 0.2s, background 0.2s;
+}
+.wiz-close-btn:hover { color: #f0f0f0; background: rgba(255,255,255,0.05); }
+
+/* Stepper */
+.wiz-stepper {
+    display: flex; align-items: center; gap: 0;
+    padding: 20px 28px 0;
+}
+.wiz-step {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.72rem; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    transition: color 0.25s;
+}
+.wiz-step.active { color: #dc2626; }
+.wiz-step.done   { color: #4ade80; }
+.wiz-step-num {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 800;
+    background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1);
+    transition: all 0.25s;
+}
+.wiz-step.active .wiz-step-num {
+    background: rgba(220,38,38,0.12); border-color: rgba(220,38,38,0.4); color: #dc2626;
+}
+.wiz-step.done .wiz-step-num {
+    background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.35); color: #4ade80;
+}
+.wiz-step-line {
+    flex: 1; height: 1px; background: rgba(255,255,255,0.08); margin: 0 10px;
+    transition: background 0.3s;
+}
+.wiz-step-line.done { background: rgba(74,222,128,0.3); }
+
+/* Corps du wizard */
+.wiz-body { padding: 22px 28px; }
+
+/* Panneaux d'étapes */
+.wiz-panel { display: none; }
+.wiz-panel.active { display: block; animation: panelIn 0.18s ease; }
+@keyframes panelIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* Champs */
+.wf { margin-bottom: 15px; }
+.wf-label {
+    font-size: 0.67rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: #6b7280; margin-bottom: 6px;
+}
+.wf-label span.req { color: #dc2626; margin-left: 2px; }
+.wf-input, .wf-select {
+    width: 100%; box-sizing: border-box;
+    background: #1a1d24; border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 8px; color: #f0f0f0; font-size: 0.84rem;
+    padding: 10px 13px; font-family:'DM Sans',sans-serif;
+    outline: none; transition: border-color 0.2s;
+}
+.wf-input:focus, .wf-select:focus { border-color: rgba(220,38,38,0.45); }
+.wf-input.error { border-color: rgba(248,113,113,0.55); }
+.wf-select option { background: #1a1d24; }
+.wf-hint { font-size: 0.71rem; color: #6b7280; margin-top: 5px; }
+.wf-error { font-size: 0.71rem; color: #f87171; margin-top: 4px; display: none; }
+.wf-error.show { display: block; }
+
+/* Grille 2 colonnes */
+.wf-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:500px) { .wf-grid2 { grid-template-columns:1fr; } }
+
+/* ── Étape 2 : Rôle + Permissions ── */
+.role-select-card {
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 9px; padding: 13px 15px;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.role-select-card:hover { border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.04); }
+.role-select-card.selected {
+    border-color: rgba(220,38,38,0.5); background: rgba(220,38,38,0.07);
+}
+.role-select-card input[type="radio"] { accent-color: #dc2626; width:15px;height:15px;flex-shrink:0; }
+.role-card-info { flex: 1; min-width:0; }
+.role-card-name { font-size:0.8rem; font-weight:700; color:#f0f0f0; }
+.role-card-desc { font-size:0.7rem; color:#9ca3af; margin-top:2px; }
+
+/* Permissions à cocher */
+.perms-container {
+    margin-top: 14px; padding: 14px; border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+}
+.perms-container-label {
+    font-size: 0.65rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.1em; color:#6b7280; margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+}
+.perms-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+@media(max-width:480px) { .perms-grid { grid-template-columns:1fr; } }
+.perm-check-card {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 9px 11px; border-radius: 7px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    cursor: pointer; transition: all 0.15s;
+}
+.perm-check-card:hover { border-color: rgba(234,179,8,0.25); background: rgba(234,179,8,0.05); }
+.perm-check-card.checked { border-color: rgba(234,179,8,0.35); background: rgba(234,179,8,0.07); }
+.perm-check-card input[type="checkbox"] { accent-color: #d97706; width:14px;height:14px;flex-shrink:0;margin-top:1px; }
+.perm-check-name { font-size:0.73rem; font-weight:600; color:#f0f0f0; }
+.perm-check-desc { font-size:0.67rem; color:#9ca3af; margin-top:1px; }
+
+/* Aucun rôle */
+.no-roles-msg { text-align:center; color:#6b7280; font-size:0.82rem; font-style:italic; padding:20px 0; }
+
+/* ── Étape 3 : Confirmation email ── */
+.confirm-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+}
+.confirm-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.81rem;
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-key { color: #6b7280; width: 130px; flex-shrink:0; font-size:0.71rem; text-transform:uppercase; font-weight:600; }
+.confirm-val { color: #f0f0f0; font-weight:500; flex:1; word-break:break-all; }
+.confirm-badge {
+    display: inline-flex; align-items:center; gap:5px;
+    padding: 2px 9px; border-radius: 4px; font-size: 0.68rem; font-weight:700;
+}
+.confirm-badge.role  { background:rgba(220,38,38,0.08); color:#ef4444; border:1px solid rgba(220,38,38,0.18); text-transform:uppercase; }
+.confirm-badge.perm  { background:rgba(234,179,8,0.08); color:rgba(234,179,8,0.85); border:1px solid rgba(234,179,8,0.18); }
+
+.email-preview {
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: 9px; padding: 14px 16px;
+    margin-top: 12px;
+}
+.email-preview-label {
+    font-size:0.67rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.09em; color:rgba(56,189,248,0.7); margin-bottom:8px;
+    display:flex; align-items:center; gap:6px;
+}
+.email-preview-body { font-size:0.79rem; color:#9ca3af; line-height:1.6; }
+.email-preview-body strong { color:#f0f0f0; }
+
+/* Pied du wizard */
+.wiz-foot {
+    padding: 16px 28px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.wiz-foot-right { display:flex; gap:10px; }
+.btn-wiz-back {
+    padding:9px 18px; border-radius:8px; font-size:0.78rem; font-weight:600;
+    background:transparent; border:1px solid rgba(255,255,255,0.1); color:#9ca3af;
+    cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+    display:flex; align-items:center; gap:7px;
+}
+.btn-wiz-back:hover { border-color:rgba(255,255,255,0.2); color:#f0f0f0; }
+.btn-wiz-next {
+    padding:9px 22px; border-radius:8px; font-size:0.78rem; font-weight:700;
+    border:none; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+    background:#dc2626; color:#fff;
+    display:flex; align-items:center; gap:7px;
+}
+.btn-wiz-next:hover { background:#b91c1c; }
+.btn-wiz-next:disabled { opacity:0.45; cursor:not-allowed; }
+.btn-wiz-submit {
+    padding:9px 22px; border-radius:8px; font-size:0.78rem; font-weight:700;
+    border:none; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+    background:#16a34a; color:#fff;
+    display:flex; align-items:center; gap:7px;
+}
+.btn-wiz-submit:hover { background:#15803d; }
+
+.step-info { font-size:0.72rem; color:#6b7280; }
+
+/* Loader spinner sur le bouton submit */
+.spin { animation: spin 0.8s linear infinite; display:inline-block; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* Toast */
+.toast {
+    position:fixed;bottom:26px;right:26px;z-index:9999;
+    background:#1c1f28;border:1px solid rgba(255,255,255,0.09);
+    border-radius:9px;padding:12px 18px;
+    display:flex;align-items:center;gap:10px;
+    font-size:0.8rem;color:#f0f0f0;
+    box-shadow:0 8px 30px rgba(0,0,0,0.55);
+    transform:translateY(70px);opacity:0;
+    transition:transform 0.3s ease,opacity 0.3s ease;pointer-events:none;
+}
+.toast.show { transform:translateY(0);opacity:1; }
+.toast-i { font-size:1rem; }
+.toast.ok   .toast-i { color:#4ade80; }
+.toast.err  .toast-i { color:#f87171; }
+.toast.info .toast-i { color:#38bdf8; }
+
+/* Bouton Ajouter dans le header */
+.btn-add-student {
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 20px;border-radius:9px;
+    background:#dc2626;color:#fff;
+    border:none;font-size:0.8rem;font-weight:700;
+    font-family:'DM Sans',sans-serif;cursor:pointer;
+    transition:background 0.2s,transform 0.15s;
+}
+.btn-add-student:hover { background:#b91c1c;transform:translateY(-1px); }

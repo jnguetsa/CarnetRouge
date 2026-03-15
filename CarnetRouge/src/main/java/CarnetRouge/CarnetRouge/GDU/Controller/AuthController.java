@@ -45,9 +45,9 @@ public class AuthController {
 
     // ── Dashboards ──
 
-    @GetMapping("/admin/dashboard")
+    @GetMapping("/admin/utilisateur")
     public String adminDashboard() {
-        return "dashboard";
+        return "utilisateurs";
     }
 
     @GetMapping("/enseignant/dashboard")
@@ -120,7 +120,7 @@ public class AuthController {
                 .orElse("");
 
         return switch (role) {
-            case "ROLE_ADMIN"      -> "redirect:/admin/dashboard";
+            case "ROLE_ADMIN"      -> "redirect:/admin/utilisateurs";
             case "ROLE_ENSEIGNANT" -> "redirect:/enseignant/dashboard";
             case "ROLE_ETUDIANT"   -> "redirect:/etudiant/dashboard";
             default                -> "redirect:/home";

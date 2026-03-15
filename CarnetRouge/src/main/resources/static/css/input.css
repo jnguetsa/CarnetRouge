@@ -1,2 +1,72 @@
 @import "tailwindcss";
 @plugin "daisyui";
+@source "../../templates/**/*.html";
+
+@theme {
+    --font-sans: "DM Sans", sans-serif;
+    --font-serif: "Playfair Display", serif;
+    --color-bg: #0c0c0e;
+    --color-surface: #131316;
+    --color-surface2: #1a1a1f;
+    --color-borderDim: rgba(255,255,255,0.06);
+    --color-borderHover: rgba(220,38,38,0.4);
+    --color-textMuted: rgba(240,240,242,0.45);
+    --color-redSoft: #ef4444;
+}
+
+@layer components {
+    .dd-menu {
+        @apply hidden absolute top-[calc(100%+6px)] right-0 z-[400]
+        bg-[#1a1a1f] border border-borderDim rounded-lg
+        min-w-[220px] shadow-[0_10px_36px_rgba(0,0,0,0.65)] overflow-hidden;
+    }
+    .dd-menu.open { @apply block; animation: ddIn 0.14s ease; }
+    .dd-wrap.open .chevron { @apply rotate-180; }
+
+    .modal-overlay {
+        @apply hidden fixed inset-0 z-[1000]
+        bg-black/75 backdrop-blur-[4px]
+        items-center justify-center;
+    }
+    .modal-overlay.open { @apply flex; }
+
+    .m-input, .m-select {
+        @apply w-full bg-surface2 border border-borderDim rounded-lg
+        text-gray-100 text-[0.83rem] px-3.5 py-2.5
+        outline-none focus:border-red-600/40 transition-colors;
+    }
+    .m-select option { @apply bg-[#1a1a1f]; }
+
+    .btn-del-confirm { @apply opacity-35 pointer-events-none; }
+    .btn-del-confirm.unlocked { @apply opacity-100 pointer-events-auto; }
+
+    .toast-box {
+        @apply fixed bottom-6 right-6 z-[9999]
+        bg-[#1c1f28] border border-borderDim rounded-[9px]
+        px-4 py-3 flex items-center gap-2.5 text-[0.8rem] text-gray-100
+        shadow-[0_8px_30px_rgba(0,0,0,0.55)]
+        translate-y-[70px] opacity-0 transition-all duration-300 pointer-events-none;
+    }
+    .toast-box.show { @apply translate-y-0 opacity-100; }
+    .toast-box.ok   .t-ico { @apply text-green-400; }
+    .toast-box.err  .t-ico { @apply text-red-400; }
+    .toast-box.info .t-ico { @apply text-sky-400; }
+}
+
+body::before {
+    content: ''; position: fixed; top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 900px; height: 400px;
+    background: radial-gradient(ellipse, rgba(220,38,38,0.07) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+}
+
+@keyframes ddIn {
+    from { opacity:0; transform:translateY(-5px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+@keyframes mIn {
+    from { opacity:0; transform:scale(0.94) translateY(-8px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.animate-mIn { animation: mIn 0.2s ease; }
