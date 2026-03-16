@@ -1,9 +1,13 @@
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 
 @Getter
 @Setter
@@ -16,4 +20,6 @@ public class Enseignant extends Utilisateurs {
 
     private String grade;
     private String typeEnseignant;
+    @ManyToMany(mappedBy = "enseignants")
+    private Collection<UE> ues = new ArrayList<>();
 }

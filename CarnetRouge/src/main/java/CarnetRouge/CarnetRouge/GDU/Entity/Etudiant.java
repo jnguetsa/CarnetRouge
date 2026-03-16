@@ -13,9 +13,9 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @DiscriminatorValue("ETU")
 public class Etudiant extends Utilisateurs {
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String matricule;
-    @Column(unique = true, nullable = false)
-    @Enumerated(EnumType.STRING)
-    private TypeNiveau niveau;
+    //@Column(unique = true, nullable = false)
+    //@Enumerated(EnumType.STRING)
+  //  private TypeNiveau niveau;
 }

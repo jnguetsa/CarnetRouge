@@ -1,10 +1,7 @@
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -14,8 +11,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+
 @Getter
 @Setter
 @SuperBuilder
@@ -23,12 +22,9 @@ import java.util.*;
 @AllArgsConstructor
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-        name = "type",
-        length = 15,
-        discriminatorType = DiscriminatorType.STRING
-)
+@DiscriminatorColumn(name = "type", length = 15, discriminatorType = DiscriminatorType.STRING)
 @EntityListeners(AuditingEntityListener.class)
+@Table(name = "utilisateurs")  // Vérifie que le nom de la table est correct
 public abstract class Utilisateurs implements UserDetails {
 
     @Id
@@ -48,14 +44,11 @@ public abstract class Utilisateurs implements UserDetails {
     protected String password;
 
     @Column(nullable = false)
-    @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    protected Date dateNaissance;
+    protected LocalDate dateNaissance;
 
-
-    @Column( nullable = false)
-    protected  String telephone;
-
+    @Column(nullable = false)
+    protected String telephone;
 
     @Column(nullable = false)
     protected boolean active = true;
@@ -78,43 +71,44 @@ public abstract class Utilisateurs implements UserDetails {
     protected Boolean emailVerified = false;
     protected Boolean phoneVerified = false;
 
-    @ManyToMany(
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
-            fetch = FetchType.EAGER
-    )
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-            name = "utilisateurs_roles",
+            name = "utilisateurs_role",  // Nom exact de la table de jointure
             joinColumns = @JoinColumn(name = "utilisateur_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     protected Set<Role> roles = new HashSet<>();
 
+    // ────────────────────────────────────────────────
+    // Implémentation de UserDetails
+    // ────────────────────────────────────────────────
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (roles.isEmpty()) {
             return Collections.emptyList();
         }
-        Set<GrantedAuthority> authorities= new HashSet<>();
-        for (Role role : roles){
 
-            if (Boolean.TRUE.equals(role.getActive())){
-                authorities.add(new SimpleGrantedAuthority("ROLE_"+role.getName()));
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        for (Role role : roles) {
+            if (Boolean.TRUE.equals(role.getActive())) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
             }
 
-            for(Permission perm : role.getPermissions()){
-                if(Boolean.TRUE.equals(perm.getActive())){
+            for (Permission perm : role.getPermissions()) {
+                if (Boolean.TRUE.equals(perm.getActive())) {
                     authorities.add(new SimpleGrantedAuthority(perm.getName()));
                 }
             }
-
         }
+
         return authorities;
     }
 
     @Override
     public boolean isEnabled() {
-        return active;   // ou return active != null && active;
+        return active;
     }
 
     @Override
@@ -129,7 +123,7 @@ public abstract class Utilisateurs implements UserDetails {
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;   // ou !someCredentialsExpiredField si tu en ajoutes un
+        return true;
     }
 
     @Override
@@ -141,6 +135,4 @@ public abstract class Utilisateurs implements UserDetails {
     public String getUsername() {
         return email;
     }
-
-
 }

@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -101,6 +102,7 @@ public class DataInitializer implements ApplicationRunner {
                     .email("admin@carnetrouge.com")
                     .password(passwordEncoder.encode("Admin123!"))
                     .telephone("0600000001")
+                    .dateNaissance(LocalDate.of(1990, 9, 17))
                     .active(true)
 
                     .createdAt(LocalDateTime.now())
@@ -119,6 +121,7 @@ public class DataInitializer implements ApplicationRunner {
                     .email("enseignant@carnetrouge.com")
                     .password(passwordEncoder.encode("Ens123!"))
                     .telephone("0600000002")
+                    .dateNaissance(LocalDate.of(1988, 9, 17))
                     .active(true)
 
                     .grade("Maître de conférences")
@@ -139,6 +142,7 @@ public class DataInitializer implements ApplicationRunner {
                     .email("etudiant@carnetrouge.com")
                     .password(passwordEncoder.encode("Etu123!"))
                     .telephone("0600000003")
+                    .dateNaissance(LocalDate.of(2003, 11, 28))
                     .active(true)
 
                     .createdAt(LocalDateTime.now())
@@ -181,6 +185,7 @@ public class DataInitializer implements ApplicationRunner {
                                 .email(data.email)
                                 .password(passwordEncoder.encode("Ens123!"))
                                 .telephone(tel)
+                                .dateNaissance(LocalDate.of(2000, 9, 17))
                                 .active(true)
 
                                 .grade(data.grade)
@@ -203,6 +208,7 @@ public class DataInitializer implements ApplicationRunner {
                                 .email(data.email)
                                 .password(passwordEncoder.encode("Ass123!"))
                                 .telephone(tel)
+                                .dateNaissance(LocalDate.of(1988, 9, 17))
                                 .active(true)
                                 .fonction(data.fonction)
                                 .createdAt(LocalDateTime.now())
