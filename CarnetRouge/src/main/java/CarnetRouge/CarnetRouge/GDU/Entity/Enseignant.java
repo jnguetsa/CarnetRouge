@@ -20,6 +20,7 @@ public class Enseignant extends Utilisateurs {
 
     private String grade;
     private String typeEnseignant;
-    @ManyToMany(mappedBy = "enseignants")
+    @ManyToMany(mappedBy = "enseignants", fetch = FetchType.LAZY)
     private Collection<UE> ues = new ArrayList<>();
+
 }

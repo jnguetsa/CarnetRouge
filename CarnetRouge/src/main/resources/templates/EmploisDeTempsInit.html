@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emploi du Temps — CarnetRouge</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+<link rel="stylesheet" th:href="@{/css/output.css}" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans:  ['"DM Sans"', 'sans-serif'],
+          serif:['"Playfair Display"', 'serif'],
+          mono:  ['"DM Mono"', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0c0c0e;
+  --surface:  #131316;
+  --surface2: #1a1a1f;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.10);
+  --red:      #dc2626;
+  --red-soft: #ef4444;
+  --red-glow: rgba(220,38,38,0.15);
+  --text:     #f0f0f2;
+  --muted:    rgba(240,240,242,0.45);
+  --dim:      rgba(240,240,242,0.22);
+  --font:     'DM Sans', sans-serif;
+  --mono:     'DM Mono', monospace;
+  --sb:       300px;
+  --r:        10px;
+}
+
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  display: flex; flex-direction: column;
+}
+
+/* FIX 1: z-index réduit à -1 pour éviter les conflits d'empilement */
+body::before {
+  content: ''; position: fixed; top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 400px;
+  background: radial-gradient(ellipse, rgba(220,38,38,0.07) 0%, transparent 70%);
+  pointer-events: none; z-index: -1; 
+}
+
+/* ── TOPBAR ── */
+#topbar {
+  height: 56px;
+  background: rgba(12,12,14,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; flex-shrink: 0; z-index: 10; position: relative;
+  gap: 12px;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+.logo-icon {
+  width: 34px; height: 34px; background: var(--red);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(220,38,38,0.35); flex-shrink: 0;
+}
+.logo-text { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+.logo-text span { color: var(--red); }
+
+/* Nav centre */
+.topbar-center { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
+
+.nb {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--muted); transition: all .15s;
+}
+.nb:hover { border-color: var(--border2); color: var(--text); }
+
+#wlabel {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.88rem; font-weight: 700;
+  min-width: 200px; text-align: center;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 14px;
+  letter-spacing: -0.01em;
+}
+
+#winput {
+  font-family: var(--mono); font-size: 11px;
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 10px; background: var(--surface2);
+  color: var(--text); outline: none; cursor: pointer;
+  color-scheme: dark; transition: border-color .15s;
+}
+#winput:focus { border-color: rgba(220,38,38,0.4); }
+
+/* Topbar droite — vue + user */
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.view-btn {
+  padding: 5px 12px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface2);
+  font-family: var(--font); font-size: 11px; font-weight: 600;
+  color: var(--muted); cursor: pointer;
+  transition: all .15s; text-transform: uppercase; letter-spacing: .05em;
+}
+.view-btn:hover { border-color: var(--border2); color: var(--text); }
+.view-btn.on { background: var(--red); border-color: var(--red); color: #fff; }
+
+.topbar-user {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px 5px 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; cursor: default;
+}
+.topbar-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--red-glow); border: 1px solid rgba(220,38,38,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--red-soft);
+}
+.topbar-name { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+/* FIX 1: Suppression du z-index sur l'app qui enfermait la sidebar mobile */
+#app { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* ── SIDEBAR ── */
+#sb {
+  width: var(--sb);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; overflow: hidden;
+}
+
+#sb-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sbtab {
+  flex: 1; padding: 12px 4px; text-align: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.sbtab:hover { color: var(--text); }
+.sbtab.on { color: var(--red); border-bottom-color: var(--red); }
+
+#sb-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+#sb-body::-webkit-scrollbar { width: 3px; }
+#sb-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.panel { display: none; flex-direction: column; gap: 14px; }
+.panel.on { display: flex; }
+
+/* ── FORM ── */
+.lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+
+.fg { display: flex; flex-direction: column; gap: 6px; }
+.fg input[type=text], .fg textarea {
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 9px 12px; font-family: var(--font); font-size: 13px;
+  color: var(--text); background: var(--surface2); outline: none; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+.fg input::placeholder, .fg textarea::placeholder { color: var(--dim); }
+.fg input:focus, .fg textarea:focus {
+  border-color: rgba(220,38,38,0.4);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
+}
+.fg textarea { resize: none; height: 62px; }
+
+/* ── CHIPS ── */
+.chip-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  padding: 5px 10px; border-radius: 100px;
+  border: 1px solid var(--border); font-size: 11px; font-weight: 500;
+  cursor: pointer; transition: all .13s;
+  color: var(--muted); background: var(--surface2);
+  user-select: none; white-space: nowrap;
+}
+.chip:hover { border-color: var(--border2); color: var(--text); }
+.chip.on { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 0 10px rgba(220,38,38,0.25); }
+.chip-subj.on { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 0 10px rgba(220,38,38,0.25); }
+
+.sel-info { font-size: 11px; color: var(--muted); font-style: italic; min-height: 14px; line-height: 1.5; }
+
+/* ── SWATCHES ── */
+.sw-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.sw {
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: transform .1s, border-color .1s; flex-shrink: 0;
+}
+.sw:hover, .sw.on { border-color: var(--text); transform: scale(1.18); }
+.sw-pick {
+  position: relative; width: 22px; height: 22px; border-radius: 50%;
+  border: 1px dashed rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  transition: border-color .1s;
+}
+.sw-pick.on { border-color: var(--text); transform: scale(1.18); }
+.sw-pick input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+/* ── PREVIEW ── */
+.card-preview {
+  border-radius: var(--r); padding: 10px 13px;
+  flex-direction: column; gap: 3px; display: none;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.card-preview.show { display: flex; }
+.pv-t { font-size: 12px; font-weight: 600; color: #fff; }
+.pv-s { font-size: 11px; color: rgba(255,255,255,.65); }
+
+/* ── BUTTONS ── */
+.cta {
+  width: 100%; padding: 11px; border-radius: var(--r); border: none;
+  background: var(--red); color: #fff;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .15s, box-shadow .15s, opacity .15s;
+}
+.cta:hover { background: #b91c1c; box-shadow: 0 0 24px rgba(220,38,38,0.35); }
+.cta:disabled { opacity: .3; cursor: default; box-shadow: none; background: var(--red); }
+
+.ghost {
+  width: 100%; padding: 9px 12px; border-radius: var(--r);
+  border: 1px solid var(--border); background: transparent;
+  font-family: var(--font); font-size: 12px; color: var(--muted);
+  cursor: pointer; transition: background .12s, color .12s; text-align: left;
+}
+.ghost:hover { background: var(--surface2); color: var(--text); }
+.ghost.danger { color: #ef4444; border-color: rgba(239,68,68,0.25); }
+.ghost.danger:hover { background: rgba(239,68,68,0.08); color: #f87171; }
+
+.div { height: 1px; background: var(--border); flex-shrink: 0; }
+.chk-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.chk-row input { accent-color: var(--red); cursor: pointer; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 24px 16px; text-align: center;
+  border: 1px dashed var(--border); border-radius: var(--r);
+}
+.empty-state i { font-size: 1.4rem; color: var(--dim); }
+.empty-state p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ── DRAG CARDS ── */
+.cards-list { display: flex; flex-direction: column; gap: 6px; }
+.dc {
+  padding: 10px 12px; border-radius: var(--r);
+  cursor: grab; color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  transition: transform .12s, box-shadow .12s;
+  user-select: none; display: flex; flex-direction: column; gap: 2px;
+  position: relative; border: 1px solid rgba(255,255,255,0.08);
+}
+.dc:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+.dc:active { cursor: grabbing; }
+.dc-t { font-size: 12px; font-weight: 600; padding-right: 20px; }
+.dc-s { font-size: 10px; opacity: .7; padding-right: 20px; }
+.dc-x {
+  position: absolute; top: 8px; right: 9px;
+  background: none; border: none; color: rgba(255,255,255,.45);
+  cursor: pointer; font-size: 12px; line-height: 1; padding: 0; transition: color .12s;
+}
+.dc-x:hover { color: #fff; }
+.dc-badge { font-size: 9px; opacity: .5; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+/* ── CALENDAR ── */
+#cal { flex: 1; overflow: hidden; display: flex; position: relative; }
+#calendar { flex: 1; }
+.fc { height: 100%; font-family: var(--font) !important; }
+.fc-theme-standard th { background: var(--surface) !important; border-color: var(--border) !important; }
+.fc-theme-standard td, .fc-theme-standard .fc-scrollgrid { border-color: var(--border) !important; }
+.fc-col-header-cell { padding: 10px 0 !important; }
+.fc-col-header-cell-cushion {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted); text-decoration: none !important;
+}
+.fc-timegrid-slot { height: 40px !important; }
+.fc-timegrid-slot-label-cushion, .fc-timegrid-axis-cushion {
+  font-family: var(--mono); font-size: 10px; color: rgba(240,240,242,0.22);
+}
+.fc-toolbar { display: none !important; }
+.fc-scroller::-webkit-scrollbar { width: 4px; }
+.fc-scroller::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.fc-day-today { background: rgba(220,38,38,0.03) !important; }
+.fc-day-today .fc-col-header-cell-cushion { color: var(--red) !important; }
+.fc-timegrid-now-indicator-line { border-color: var(--red) !important; }
+.fc-timegrid-now-indicator-arrow { border-top-color: var(--red) !important; border-bottom-color: var(--red) !important; }
+.fc-v-event { border: none !important; border-radius: 6px !important; box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; overflow: visible !important; }
+.fc-event-main { padding: 0 !important; height: 100%; overflow: hidden; border-radius: 6px; }
+.ev { height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 5px 8px; overflow: hidden; position: relative; }
+.ev-t { font-size: 11px; font-weight: 600; color: #fff; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-s { font-size: 10px; color: rgba(255,255,255,.7); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-pause { height: 100%; display: flex; align-items: center; justify-content: center; }
+.ev-pause span { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.8); letter-spacing: .07em; text-transform: uppercase; }
+
+/* FIX 2: Styles pour les poignées Gauche et Droite */
+.ev-lhandle { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; display: flex; align-items: center; justify-content: center; border-radius: 6px 0 0 6px; }
+.ev-lhandle::after { content: ''; display: block; width: 2px; height: 50%; min-height: 10px; background: rgba(255,255,255,.35); border-radius: 2px; }
+.ev-lhandle:hover::after { background: rgba(255,255,255,.8); }
+.ev-hhandle { position: absolute; right: 0; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; display: flex; align-items: center; justify-content: center; border-radius: 0 6px 6px 0; }
+.ev-hhandle::after { content: ''; display: block; width: 2px; height: 50%; min-height: 10px; background: rgba(255,255,255,.35); border-radius: 2px; }
+.ev-hhandle:hover::after { background: rgba(255,255,255,.8); }
+#h-ghost { display: none; position: fixed; z-index: 999; pointer-events: none; border-radius: 6px; opacity: .3; }
+
+/* ── MODAL (générique) ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 200;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-bg.on { display: flex; }
+.modal-box {
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  display: flex; flex-direction: column; gap: 16px;
+  animation: mIn .2s ease;
+}
+@keyframes mIn {
+  from { opacity:0; transform:scale(0.94) translateY(-8px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+
+/* Modal suppression */
+#mbg .modal-box { width: 320px; }
+#modal h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+#modal p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.mrow { display: flex; gap: 8px; }
+.mrow button { flex: 1; padding: 10px; border-radius: 8px; font-family: var(--font); font-size: 13px; cursor: pointer; transition: all .12s; }
+.mc { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+.mc:hover { color: var(--text); border-color: var(--border2); }
+.md { background: #dc2626; border: none; color: #fff; font-weight: 600; }
+.md:hover { background: #b91c1c; box-shadow: 0 0 16px rgba(220,38,38,0.3); }
+
+/* ── MODAL AJOUT COURS (mobile) ── */
+#mob-modal .modal-box {
+  width: calc(100vw - 32px); max-width: 400px;
+  max-height: 92vh; overflow-y: auto;
+}
+#mob-modal .modal-box::-webkit-scrollbar { width: 3px; }
+#mob-modal .modal-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.mob-modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem; font-weight: 700; color: var(--text);
+}
+.mob-modal-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); cursor: pointer; font-size: 14px; transition: color .12s;
+  flex-shrink: 0;
+}
+.mob-modal-close:hover { color: var(--text); }
+
+/* ── FAB MOBILE (bouton flottant "Ajouter") ── */
+#fab {
+  display: none;
+  position: fixed; bottom: 20px; right: 20px; z-index: 50;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--red); border: none;
+  color: #fff; font-size: 22px;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(220,38,38,0.5);
+  align-items: center; justify-content: center;
+  transition: transform .15s, box-shadow .15s;
+}
+#fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(220,38,38,0.65); }
+#fab:active { transform: scale(0.96); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(60px); opacity: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  color: var(--text); padding: 10px 20px;
+  border-radius: 100px; font-size: 12px; font-weight: 500;
+  z-index: 300; transition: transform .25s, opacity .25s;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 30px rgba(0,0,0,.4);
+}
+#toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ── RESPONSIVE ── */
+#btn-menu {
+  display: none; width: 36px; height: 36px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; align-items: center; justify-content: center;
+  flex-direction: column; gap: 4px; padding: 7px; flex-shrink: 0;
+}
+#btn-menu span { display: block; width: 100%; height: 2px; background: var(--muted); border-radius: 2px; transition: transform .22s, opacity .22s; }
+
+#sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 99; backdrop-filter: blur(3px); }
+#sb-overlay.on { display: block; }
+
+#btn-sb-close {
+  display: none; position: absolute; top: 12px; right: 12px;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; font-size: 14px; color: var(--muted);
+  align-items: center; justify-content: center; z-index: 2; transition: color .12s;
+}
+#btn-sb-close:hover { color: var(--text); }
+
+@media (max-width: 900px) {
+  :root { --sb: 260px; }
+  #wlabel { min-width: 150px; font-size: 0.8rem; }
+  #winput { display: none; }
+  .logo-text { display: none; }
+  .view-btn span { display: none; }
+}
+
+@media (max-width: 640px) {
+  :root { --sb: 92vw; }
+  #btn-menu { display: flex; }
+  #btn-sb-close { display: flex; }
+  #fab { display: flex; }
+
+  /* Sidebar devient drawer */
+  #sb {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: var(--sb); z-index: 100;
+    transform: translateX(-105%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 30px rgba(0,0,0,.5);
+  }
+  #sb.open { transform: translateX(0); }
+  #cal { width: 100%; }
+
+  #topbar { padding: 0 12px; gap: 8px; }
+  .topbar-right { display: none; }
+  #wlabel { min-width: 0; flex: 1; text-align: center; font-size: 0.75rem; padding: 5px 8px; }
+
+  .fc-timegrid-slot { height: 32px !important; }
+  .fc-col-header-cell-cushion { font-size: 9px !important; letter-spacing: 0 !important; }
+  .modal-box { width: calc(100vw - 32px) !important; }
+}
+
+@media (max-width: 400px) {
+  .fc-timegrid-slot { height: 28px !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="sb-overlay"></div>
+
+<!-- ══ TOPBAR ══ -->
+<div id="topbar">
+  <button id="btn-menu" aria-label="Menu"><span></span><span></span><span></span></button>
+
+  <a class="logo" href="#">
+    <div class="logo-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+           fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+      </svg>
+    </div>
+    <span class="logo-text">Carnet<span>Rouge</span></span>
+  </a>
+
+  <!-- Centre : navigation semaine -->
+  <div class="topbar-center">
+    <button class="nb" id="btn-prev"><i class="bi bi-chevron-left"></i></button>
+    <span id="wlabel">—</span>
+    <button class="nb" id="btn-next"><i class="bi bi-chevron-right"></i></button>
+    <input type="date" id="winput">
+  </div>
+
+  <!-- Droite : vue + user -->
+  <div class="topbar-right">
+    <button class="view-btn on" id="view-week" data-view="timeGridWeek">
+      <i class="bi bi-calendar-week"></i> <span>Semaine</span>
+    </button>
+    <button class="view-btn" id="view-day" data-view="timeGridDay">
+      <i class="bi bi-calendar-day"></i> <span>Jour</span>
+    </button>
+    <div class="topbar-user">
+      <div class="topbar-avatar">A</div>
+      <span class="topbar-name">Admin</span>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ══ SIDEBAR ══ -->
+  <div id="sb">
+    <button id="btn-sb-close" aria-label="Fermer"><i class="bi bi-x"></i></button>
+
+    <div id="sb-tabs">
+      <div class="sbtab on" data-tab="cours">Cours</div>
+      <div class="sbtab" data-tab="evenement">Événement</div>
+      <div class="sbtab" data-tab="liste">À placer</div>
+    </div>
+
+    <div id="sb-body">
+
+      <!-- TAB: COURS -->
+      <div class="panel on" id="panel-cours">
+        <div class="lbl">Enseignants</div>
+        <div class="chip-grid" id="teacher-chips"></div>
+
+        <div class="lbl">
+          Matières
+          <span id="subj-hint" style="font-weight:400;font-style:italic;text-transform:none;letter-spacing:0;color:var(--muted);font-size:10px"></span>
+        </div>
+        <div class="chip-grid" id="subject-chips">
+          <span style="font-size:12px;color:var(--muted);font-style:italic">Sélectionnez un enseignant…</span>
+        </div>
+
+        <div class="sel-info" id="sel-info"></div>
+        <div class="div"></div>
+
+        <div class="lbl">Couleur</div>
+        <div class="sw-row" id="sw-cours">
+          <div class="sw on" style="background:#dc2626" data-c="#dc2626"></div>
+          <div class="sw" style="background:#1e3a5f" data-c="#1e3a5f"></div>
+          <div class="sw" style="background:#1f6f3c" data-c="#1f6f3c"></div>
+          <div class="sw" style="background:#5b21b6" data-c="#5b21b6"></div>
+          <div class="sw" style="background:#7c2d12" data-c="#7c2d12"></div>
+          <div class="sw" style="background:#0f4c75" data-c="#0f4c75"></div>
+          <div class="sw" style="background:#6d3078" data-c="#6d3078"></div>
+          <div class="sw" style="background:#7d6608" data-c="#7d6608"></div>
+          <div class="sw" style="background:#374151" data-c="#374151"></div>
+          <div class="sw-pick" title="Couleur libre">+<input type="color" id="cpick-cours" value="#dc2626"></div>
+        </div>
+
+        <div class="card-preview" id="prev-cours">
+          <div class="pv-t" id="pv-t"></div>
+          <div class="pv-s" id="pv-s"></div>
+        </div>
+
+        <button class="cta" id="btn-create-cours" disabled>Créer la carte de cours →</button>
+      </div>
+
+      <!-- TAB: ÉVÉNEMENT -->
+      <div class="panel" id="panel-evenement">
+        <p style="font-size:12px;color:var(--muted);line-height:1.7">Créez un événement personnalisé (réunion, sport…) à glisser sur la grille.</p>
+
+        <div class="fg">
+          <label class="lbl">Titre</label>
+          <input type="text" id="ev-titre" placeholder="ex. Réunion pédagogique">
+        </div>
+        <div class="fg">
+          <label class="lbl">Sous-titre <span style="font-weight:400;text-transform:none;font-style:italic;color:var(--muted)">(optionnel)</span></label>
+          <input type="text" id="ev-detail" placeholder="ex. Salle B2 · Dr. MARTIN">
+        </div>
+        <div class="fg">
+          <label class="lbl">Description <span style="font-weight:400;text-transform:none;font-style:italic;color:var(--muted)">(optionnel)</span></label>
+          <textarea id="ev-desc" placeholder="Notes complémentaires…"></textarea>
+        </div>
+
+        <div class="lbl">Couleur</div>
+        <div class="sw-row" id="sw-ev">
+          <div class="sw on" style="background:#dc2626" data-c="#dc2626"></div>
+          <div class="sw" style="background:#0f4c75" data-c="#0f4c75"></div>
+          <div class="sw" style="background:#1f6f3c" data-c="#1f6f3c"></div>
+          <div class="sw" style="background:#374151" data-c="#374151"></div>
+          <div class="sw" style="background:#7c2d12" data-c="#7c2d12"></div>
+          <div class="sw" style="background:#6d3078" data-c="#6d3078"></div>
+          <div class="sw" style="background:#7d6608" data-c="#7d6608"></div>
+          <div class="sw-pick" title="Couleur libre">+<input type="color" id="cpick-ev" value="#dc2626"></div>
+        </div>
+
+        <div class="card-preview" id="prev-ev">
+          <div class="pv-t" id="ev-pv-t"></div>
+          <div class="pv-s" id="ev-pv-s"></div>
+        </div>
+
+        <button class="cta" id="btn-create-ev" disabled>Créer l'événement →</button>
+      </div>
+
+      <!-- TAB: À PLACER -->
+      <div class="panel" id="panel-liste">
+        <p style="font-size:12px;color:var(--muted);line-height:1.7">
+          Glissez un bloc sur la grille.<br>
+          <strong style="color:var(--text)">↕ Verticalement</strong> : poignée en bas.<br>
+          <strong style="color:var(--text)">↔ Horizontalement</strong> : poignées latérales
+          <span style="font-family:var(--mono);font-size:10px;background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:4px">║</span>.
+        </p>
+
+        <!-- PAUSE -->
+        <div class="dc fc-event dc-pause"
+             data-title="PAUSE" data-color="#374151" data-cid="" data-pause="1"
+             style="background:#374151">
+          <div class="dc-t">⏸ Pause</div>
+          <div class="dc-badge">Glisser · Étirer ↕↔</div>
+        </div>
+
+        <div class="cards-list" id="cards"></div>
+        <div id="empty-cards" class="empty-state" style="display:none">
+          <i class="bi bi-collection"></i>
+          <p>Aucun cours à placer.<br>Créez une carte depuis l'onglet <strong style="color:var(--text)">Cours</strong>.</p>
+        </div>
+
+        <div class="div"></div>
+        <label class="chk-row">
+          <input type="checkbox" id="chk-rm" checked>
+          Retirer après placement
+        </label>
+        <button class="ghost danger" id="btn-clear">
+          <i class="bi bi-trash3"></i> Vider l'emploi du temps
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="cal"><div id="calendar"></div></div>
+</div>
+
+<!-- FAB mobile -->
+<button id="fab" title="Ajouter un cours"><i class="bi bi-plus-lg"></i></button>
+
+<!-- Ghost resize -->
+<div id="h-ghost"></div>
+
+<!-- ══ MODAL SUPPRESSION ══ -->
+<div id="mbg" class="modal-bg">
+  <div id="modal" class="modal-box" style="width:320px">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);display:flex;align-items:center;justify-content:center;color:#ef4444;flex-shrink:0;font-size:1rem;">
+        <i class="bi bi-trash3-fill"></i>
+      </div>
+      <div>
+        <h3 id="m-t">Supprimer ?</h3>
+        <p id="m-d" style="margin-top:3px;font-size:12px;"></p>
+      </div>
+    </div>
+    <div class="mrow">
+      <button class="mc" id="m-cancel">Annuler</button>
+      <button class="md" id="m-confirm">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL VIDER EDT ══ -->
+<div id="clear-bg" class="modal-bg">
+  <div class="modal-box" style="width:320px">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);display:flex;align-items:center;justify-content:center;color:#ef4444;flex-shrink:0;font-size:1rem;">
+        <i class="bi bi-calendar-x-fill"></i>
+      </div>
+      <div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--text)">Vider l'emploi du temps ?</h3>
+        <p style="margin-top:3px;font-size:12px;color:var(--muted);">Tous les événements seront supprimés définitivement.</p>
+      </div>
+    </div>
+    <div class="mrow">
+      <button class="mc" id="clear-cancel">Annuler</button>
+      <button class="md" id="clear-confirm"><i class="bi bi-trash3"></i> Tout vider</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL AJOUT COURS (MOBILE) ══ -->
+<div id="mob-modal" class="modal-bg">
+  <div class="modal-box">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div>
+        <div class="mob-modal-title">Ajouter un cours</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Sélectionnez enseignant + matière</div>
+      </div>
+      <button class="mob-modal-close" id="mob-modal-close"><i class="bi bi-x"></i></button>
+    </div>
+
+    <!-- Tabs internes -->
+    <div style="display:flex;gap:6px;padding:2px;background:var(--surface2);border-radius:9px;border:1px solid var(--border);">
+      <button class="mob-tab on" data-mtab="cours" style="flex:1;padding:7px;border-radius:7px;border:none;font-family:var(--font);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:all .15s;background:var(--red);color:#fff;">Cours</button>
+      <button class="mob-tab" data-mtab="evenement" style="flex:1;padding:7px;border-radius:7px;border:none;font-family:var(--font);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:all .15s;background:transparent;color:var(--muted);">Événement</button>
+    </div>
+
+    <!-- Contenu cours mobile -->
+    <div id="mob-panel-cours">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div class="lbl" style="margin-bottom:8px;">Enseignants</div>
+          <div class="chip-grid" id="mob-teacher-chips"></div>
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:8px;">Matières</div>
+          <div class="chip-grid" id="mob-subject-chips">
+            <span style="font-size:12px;color:var(--muted);font-style:italic">Sélectionnez un enseignant…</span>
+          </div>
+        </div>
+        <div class="sel-info" id="mob-sel-info"></div>
+        <div class="div"></div>
+        <div>
+          <div class="lbl" style="margin-bottom:8px;">Couleur</div>
+          <div class="sw-row" id="mob-sw-cours">
+            <div class="sw on" style="background:#dc2626" data-c="#dc2626"></div>
+            <div class="sw" style="background:#1e3a5f" data-c="#1e3a5f"></div>
+            <div class="sw" style="background:#1f6f3c" data-c="#1f6f3c"></div>
+            <div class="sw" style="background:#5b21b6" data-c="#5b21b6"></div>
+            <div class="sw" style="background:#7c2d12" data-c="#7c2d12"></div>
+            <div class="sw" style="background:#0f4c75" data-c="#0f4c75"></div>
+            <div class="sw" style="background:#6d3078" data-c="#6d3078"></div>
+            <div class="sw" style="background:#374151" data-c="#374151"></div>
+            <div class="sw-pick" title="Couleur libre">+<input type="color" id="mob-cpick-cours" value="#dc2626"></div>
+          </div>
+        </div>
+        <div class="card-preview" id="mob-prev-cours">
+          <div class="pv-t" id="mob-pv-t"></div>
+          <div class="pv-s" id="mob-pv-s"></div>
+        </div>
+        <button class="cta" id="mob-btn-create-cours" disabled>Créer la carte →</button>
+      </div>
+    </div>
+
+    <!-- Contenu événement mobile -->
+    <div id="mob-panel-evenement" style="display:none;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="fg">
+          <label class="lbl">Titre</label>
+          <input type="text" id="mob-ev-titre" placeholder="ex. Réunion pédagogique">
+        </div>
+        <div class="fg">
+          <label class="lbl">Sous-titre <span style="font-weight:400;text-transform:none;font-style:italic;color:var(--muted)">(optionnel)</span></label>
+          <input type="text" id="mob-ev-detail" placeholder="ex. Salle B2">
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:8px;">Couleur</div>
+          <div class="sw-row" id="mob-sw-ev">
+            <div class="sw on" style="background:#dc2626" data-c="#dc2626"></div>
+            <div class="sw" style="background:#0f4c75" data-c="#0f4c75"></div>
+            <div class="sw" style="background:#1f6f3c" data-c="#1f6f3c"></div>
+            <div class="sw" style="background:#374151" data-c="#374151"></div>
+            <div class="sw" style="background:#7c2d12" data-c="#7c2d12"></div>
+            <div class="sw" style="background:#6d3078" data-c="#6d3078"></div>
+            <div class="sw-pick" title="Couleur libre">+<input type="color" id="mob-cpick-ev" value="#dc2626"></div>
+          </div>
+        </div>
+        <div class="card-preview" id="mob-prev-ev">
+          <div class="pv-t" id="mob-ev-pv-t"></div>
+          <div class="pv-s" id="mob-ev-pv-s"></div>
+        </div>
+        <button class="cta" id="mob-btn-create-ev" disabled>Créer l'événement →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const TEACHERS =[
+    { name:'ACHA',           subjects:['ENGLISH'],              color:'#1a5276' },
+    { name:'TAMEH',          subjects:['ENGLISH'],              color:'#1a5276' },
+    { name:'PESSA',          subjects:['BDD'],                  color:'#1b2631' },
+    { name:'CHEIKH',         subjects:['BDD'],                  color:'#1b2631' },
+    { name:'KOUAMOU',        subjects:['GÉNIE LOGICIEL'],       color:'#6d3078' },
+    { name:'MAHAMAT',        subjects:['ADMIN SYSTÈME'],        color:'#155e75' },
+    { name:'MBALLA',         subjects:['RÉSEAUX'],              color:'#1f6f3c' },
+    { name:'BILLONG',        subjects:['PROG. WEB JAVA'],       color:'#7d3c1a' },
+    { name:'TIYOUH',         subjects:['TECHDAYS-WORDPRESS'],   color:'#3f3f46' },
+    { name:'NITCHEU',        subjects:['IHM'],                  color:'#7d6608' },
+    { name:'MBOA',           subjects:['COMMUNICATION'],        color:'#7c2d12' },
+    { name:'BIAMOU',         subjects:['SPORT'],                color:'#0f4c75' },
+    { name:'JEAN THEOPHILE', subjects:['SAGESSE & SCIENCE'],    color:'#4a235a' },
+  ];
+
+  const ALL_SUBJECTS =[...new Set(TEACHERS.flatMap(t => t.subjects))].sort();
+
+  // STATE desktop
+  let selTeachers = new Set(), selSubject = null, colorCours = '#dc2626', colorEv = '#dc2626';
+  // STATE mobile modal
+  let mobSelTeachers = new Set(), mobSelSubject = null, mobColorCours = '#dc2626', mobColorEv = '#dc2626';
+
+  let cards =[], pendingDel = null;
+  let calendar, fcDrag;
+
+  const $ = id => document.getElementById(id);
+  const uid = () => Math.random().toString(36).slice(2,9);
+
+  let tt;
+  function toast(msg) {
+    clearTimeout(tt);
+    $('toast').textContent = msg;
+    $('toast').classList.add('on');
+    tt = setTimeout(() => $('toast').classList.remove('on'), 2400);
+  }
+
+  function teachersFor(subj) { return TEACHERS.filter(t => t.subjects.includes(subj)).map(t => t.name); }
+  function subjectsFor(names) { return [...new Set([...names].flatMap(n => TEACHERS.find(t=>t.name===n)?.subjects||[]))]; }
+
+  // ── TABS SIDEBAR ──
+  document.querySelectorAll('.sbtab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sbtab').forEach(t => t.classList.remove('on'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+      tab.classList.add('on');
+      $('panel-' + tab.dataset.tab).classList.add('on');
+    });
+  });
+
+  // ── SWATCHES (générique) ──
+  function initSwatches(containerId, pickId, onChange) {
+    const cont = $(containerId), pick = $(pickId);
+    cont.querySelectorAll('.sw[data-c]').forEach(sw => {
+      sw.addEventListener('click', () => {
+        cont.querySelectorAll('.sw,.sw-pick').forEach(s=>s.classList.remove('on'));
+        sw.classList.add('on'); onChange(sw.dataset.c);
+      });
+    });
+    cont.querySelector('.sw-pick').addEventListener('click', () => pick.click());
+    pick.addEventListener('input', e => {
+      cont.querySelectorAll('.sw,.sw-pick').forEach(s=>s.classList.remove('on'));
+      const sp = cont.querySelector('.sw-pick');
+      sp.classList.add('on'); sp.style.background = e.target.value;
+      onChange(e.target.value);
+    });
+  }
+
+  initSwatches('sw-cours',     'cpick-cours',     c => { colorCours = c; updateCoursPreview(); });
+  initSwatches('sw-ev',        'cpick-ev',        c => { colorEv = c; updateEvPreview(); });
+  initSwatches('mob-sw-cours', 'mob-cpick-cours', c => { mobColorCours = c; updateMobCoursPreview(); });
+  initSwatches('mob-sw-ev',    'mob-cpick-ev',    c => { mobColorEv = c; updateMobEvPreview(); });
+
+  // ── COURS PANEL DESKTOP ──
+  function buildTeacherChips() {
+    const grid = $('teacher-chips');
+    grid.innerHTML = TEACHERS.map(t => `<div class="chip" data-teacher="${t.name}">${t.name}</div>`).join('');
+    grid.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const name = chip.dataset.teacher;
+        if (selTeachers.has(name)) {
+          selTeachers.delete(name);
+          if (selSubject && selTeachers.size > 0) {
+            if (![...selTeachers].some(n => TEACHERS.find(t=>t.name===n)?.subjects.includes(selSubject))) selSubject = null;
+          } else if (!selTeachers.size) selSubject = null;
+        } else selTeachers.add(name);
+        updateCours();
+      });
+    });
+  }
+
+  function buildSubjectChips() {
+    const grid = $('subject-chips');
+    const available = selTeachers.size > 0 ? subjectsFor(selTeachers) : ALL_SUBJECTS;
+    if (!available.length) { grid.innerHTML = '<span style="font-size:12px;color:var(--muted);font-style:italic">Aucune matière disponible.</span>'; return; }
+    grid.innerHTML = available.map(s => `<div class="chip chip-subj${s===selSubject?' on':''}" data-subj="${s}" title="${teachersFor(s).join(', ')}">${s}</div>`).join('');
+    grid.querySelectorAll('.chip-subj').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const subj = chip.dataset.subj;
+        if (selSubject === subj) selSubject = null;
+        else { selSubject = subj; if (!selTeachers.size) teachersFor(subj).forEach(n=>selTeachers.add(n)); else selTeachers = new Set(teachersFor(subj)); }
+        updateCours();
+      });
+    });
+  }
+
+  function updateCours() {
+    document.querySelectorAll('#teacher-chips .chip').forEach(c => c.classList.toggle('on', selTeachers.has(c.dataset.teacher)));
+    buildSubjectChips();
+    if (selSubject && selTeachers.size && ![...selTeachers].some(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(selSubject))) selSubject = null;
+    const info = $('sel-info');
+    if (selTeachers.size && selSubject) {
+      info.textContent = [...selTeachers].filter(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(selSubject)).join(' + ') + ' — ' + selSubject;
+    } else if (selTeachers.size) {
+      const hasCommon = ALL_SUBJECTS.some(s=>[...selTeachers].every(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(s)));
+      info.textContent = hasCommon ? selTeachers.size+' enseignant(s) — choisissez une matière' : '⚠ Aucune matière en commun';
+    } else info.textContent = '';
+    updateCoursPreview();
+    $('btn-create-cours').disabled = !(selSubject && selTeachers.size && [...selTeachers].some(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(selSubject)));
+  }
+
+  function updateCoursPreview() {
+    const p = $('prev-cours');
+    if (selTeachers.size && selSubject) {
+      $('pv-t').textContent = selSubject;
+      $('pv-s').textContent = [...selTeachers].filter(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(selSubject)).join(' / ');
+      p.style.background = colorCours; p.classList.add('show');
+    } else p.classList.remove('show');
+  }
+
+  $('btn-create-cours').addEventListener('click', () => {
+    if (!selSubject || !selTeachers.size) return;
+    const relevant = [...selTeachers].filter(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(selSubject));
+    cards.push({ id: uid(), title: selSubject, sub: relevant.join(' / '), color: colorCours, isPause: false });
+    renderCards(); switchTab('liste');
+    toast('Carte créée → onglet "À placer"');
+  });
+
+  // ── ÉVÉNEMENT PANEL DESKTOP ──
+  function updateEvPreview() {
+    const titre = $('ev-titre').value.trim();
+    $('btn-create-ev').disabled = !titre;
+    const p = $('prev-ev');
+    if (titre) { $('ev-pv-t').textContent = titre; $('ev-pv-s').textContent = $('ev-detail').value.trim(); p.style.background = colorEv; p.classList.add('show'); }
+    else p.classList.remove('show');
+  }
+  $('ev-titre').addEventListener('input', updateEvPreview);
+  $('ev-detail').addEventListener('input', updateEvPreview);
+  $('btn-create-ev').addEventListener('click', () => {
+    const titre = $('ev-titre').value.trim();
+    if (!titre) return;
+    cards.push({ id: uid(), title: titre, sub: $('ev-detail').value.trim(), color: colorEv, isPause: false, isEvent: true });
+    $('ev-titre').value = ''; $('ev-detail').value = ''; $('ev-desc').value = '';
+    updateEvPreview(); renderCards(); switchTab('liste');
+    toast('Événement créé → onglet "À placer"');
+  });
+
+  // ── MODAL MOBILE — COURS ──
+  function buildMobTeacherChips() {
+    const grid = $('mob-teacher-chips');
+    grid.innerHTML = TEACHERS.map(t => `<div class="chip" data-teacher="${t.name}">${t.name}</div>`).join('');
+    grid.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const name = chip.dataset.teacher;
+        if (mobSelTeachers.has(name)) {
+          mobSelTeachers.delete(name);
+          if (mobSelSubject && mobSelTeachers.size > 0) {
+            if (![...mobSelTeachers].some(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(mobSelSubject))) mobSelSubject = null;
+          } else if (!mobSelTeachers.size) mobSelSubject = null;
+        } else mobSelTeachers.add(name);
+        updateMobCours();
+      });
+    });
+  }
+
+  function buildMobSubjectChips() {
+    const grid = $('mob-subject-chips');
+    const available = mobSelTeachers.size > 0 ? subjectsFor(mobSelTeachers) : ALL_SUBJECTS;
+    if (!available.length) { grid.innerHTML = '<span style="font-size:12px;color:var(--muted);font-style:italic">Aucune matière.</span>'; return; }
+    grid.innerHTML = available.map(s => `<div class="chip chip-subj${s===mobSelSubject?' on':''}" data-subj="${s}">${s}</div>`).join('');
+    grid.querySelectorAll('.chip-subj').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const subj = chip.dataset.subj;
+        if (mobSelSubject === subj) mobSelSubject = null;
+        else { mobSelSubject = subj; if (!mobSelTeachers.size) teachersFor(subj).forEach(n=>mobSelTeachers.add(n)); else mobSelTeachers = new Set(teachersFor(subj)); }
+        updateMobCours();
+      });
+    });
+  }
+
+  function updateMobCours() {
+    document.querySelectorAll('#mob-teacher-chips .chip').forEach(c => c.classList.toggle('on', mobSelTeachers.has(c.dataset.teacher)));
+    buildMobSubjectChips();
+    if (mobSelSubject && mobSelTeachers.size && ![...mobSelTeachers].some(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(mobSelSubject))) mobSelSubject = null;
+    const info = $('mob-sel-info');
+    if (mobSelTeachers.size && mobSelSubject) {
+      info.textContent = [...mobSelTeachers].filter(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(mobSelSubject)).join(' + ') + ' — ' + mobSelSubject;
+    } else if (mobSelTeachers.size) {
+      const hasCommon = ALL_SUBJECTS.some(s=>[...mobSelTeachers].every(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(s)));
+      info.textContent = hasCommon ? mobSelTeachers.size+' enseignant(s) — choisissez une matière' : '⚠ Aucune matière en commun';
+    } else info.textContent = '';
+    updateMobCoursPreview();
+    $('mob-btn-create-cours').disabled = !(mobSelSubject && mobSelTeachers.size && [...mobSelTeachers].some(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(mobSelSubject)));
+  }
+
+  function updateMobCoursPreview() {
+    const p = $('mob-prev-cours');
+    if (mobSelTeachers.size && mobSelSubject) {
+      $('mob-pv-t').textContent = mobSelSubject;
+      $('mob-pv-s').textContent = [...mobSelTeachers].filter(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(mobSelSubject)).join(' / ');
+      p.style.background = mobColorCours; p.classList.add('show');
+    } else p.classList.remove('show');
+  }
+
+  $('mob-btn-create-cours').addEventListener('click', () => {
+    if (!mobSelSubject || !mobSelTeachers.size) return;
+    const relevant = [...mobSelTeachers].filter(n=>TEACHERS.find(t=>t.name===n)?.subjects.includes(mobSelSubject));
+    cards.push({ id: uid(), title: mobSelSubject, sub: relevant.join(' / '), color: mobColorCours, isPause: false });
+    renderCards(); closeMobModal();
+    toast('Carte créée → onglet "À placer"');
+  });
+
+  // ── ÉVÉNEMENT MOBILE ──
+  function updateMobEvPreview() {
+    const titre = $('mob-ev-titre').value.trim();
+    $('mob-btn-create-ev').disabled = !titre;
+    const p = $('mob-prev-ev');
+    if (titre) { $('mob-ev-pv-t').textContent = titre; $('mob-ev-pv-s').textContent = $('mob-ev-detail').value.trim(); p.style.background = mobColorEv; p.classList.add('show'); }
+    else p.classList.remove('show');
+  }
+  $('mob-ev-titre').addEventListener('input', updateMobEvPreview);
+  $('mob-ev-detail').addEventListener('input', updateMobEvPreview);
+  $('mob-btn-create-ev').addEventListener('click', () => {
+    const titre = $('mob-ev-titre').value.trim();
+    if (!titre) return;
+    cards.push({ id: uid(), title: titre, sub: $('mob-ev-detail').value.trim(), color: mobColorEv, isPause: false, isEvent: true });
+    $('mob-ev-titre').value = ''; $('mob-ev-detail').value = '';
+    updateMobEvPreview(); renderCards(); closeMobModal();
+    toast('Événement créé → onglet "À placer"');
+  });
+
+  // ── TABS MODAL MOBILE ──
+  document.querySelectorAll('.mob-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mob-tab').forEach(b => {
+        b.style.background = 'transparent'; b.style.color = 'var(--muted)';
+      });
+      btn.style.background = 'var(--red)'; btn.style.color = '#fff';
+      const tab = btn.dataset.mtab;
+      $('mob-panel-cours').style.display     = tab === 'cours'     ? 'block' : 'none';
+      $('mob-panel-evenement').style.display = tab === 'evenement' ? 'block' : 'none';
+    });
+  });
+
+  // ── FAB + MODAL MOBILE ──
+  function openMobModal() { $('mob-modal').classList.add('on'); document.body.style.overflow = 'hidden'; }
+  function closeMobModal() { $('mob-modal').classList.remove('on'); document.body.style.overflow = ''; }
+
+  $('fab').addEventListener('click', openMobModal);
+  $('mob-modal-close').addEventListener('click', closeMobModal);
+  $('mob-modal').addEventListener('click', e => { if (e.target === $('mob-modal')) closeMobModal(); });
+
+  // ── DRAG CARDS ──
+  function renderCards() {
+    const list = $('cards');
+    list.innerHTML = cards.map(c => `
+      <div class="dc fc-event" id="dc-${c.id}" data-title="${c.title}${c.sub?'\n'+c.sub:''}" data-color="${c.color}" data-cid="${c.id}" data-pause="0" style="background:${c.color}">
+        <div class="dc-t">${c.title}</div>
+        ${c.sub ? `<div class="dc-s">${c.sub}</div>` : ''}
+        ${c.isEvent ? `<div class="dc-badge">📌 Événement</div>` : ''}
+        <button class="dc-x" data-del="${c.id}">✕</button>
+      </div>`).join('');
+    list.querySelectorAll('.dc-x').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); cards = cards.filter(c=>c.id!==btn.dataset.del); renderCards(); });
+    });
+    // Empty state
+    $('empty-cards').style.display = cards.length === 0 ? 'flex' : 'none';
+    initFCDrag();
+  }
+
+  function initFCDrag() {
+    if (fcDrag) fcDrag.destroy();
+    fcDrag = new FullCalendar.Draggable($('sb-body'), {
+      itemSelector: '.fc-event',
+      eventData: el => ({
+        id: uid(), title: el.getAttribute('data-title'),
+        backgroundColor: el.getAttribute('data-color'),
+        borderColor: el.getAttribute('data-color'),
+        extendedProps: { cid: el.getAttribute('data-cid'), isPause: el.getAttribute('data-pause')==='1' }
+      })
+    });
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.sbtab').forEach(t => t.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('on');
+    $('panel-' + tab).classList.add('on');
+  }
+
+  // ── CALENDAR ──
+  calendar = new FullCalendar.Calendar($('calendar'), {
+    locale: 'fr', initialView: 'timeGridWeek',
+    firstDay: 1, hiddenDays:[0], headerToolbar: false,
+    dayHeaderFormat: { weekday: 'long', day: 'numeric' },
+    slotMinTime: '07:00:00', slotMaxTime: '19:00:00',
+    slotDuration: '00:30:00', slotLabelInterval: '01:00:00',
+    slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    allDaySlot: false, editable: true, droppable: true,
+    eventDurationEditable: true, eventResizableFromStart: true,
+    defaultTimedEventDuration: '01:00:00', snapDuration: '00:30:00',
+
+    eventOverlap: (still, moving) => moving.extendedProps?.isPause || still.extendedProps?.isPause,
+
+    drop(info) {
+      if (info.draggedEl.getAttribute('data-pause') !== '1' && $('chk-rm').checked) {
+        cards = cards.filter(c => c.id !== info.draggedEl.getAttribute('data-cid'));
+        renderCards();
+      }
+      // Fermer sidebar sur mobile après placement
+      if (window.innerWidth <= 640) closeSidebar();
+    },
+
+    eventReceive(info) {
+      if (!info.event.extendedProps?.isClone) {
+        const start = info.event.start;
+        info.event.setEnd(new Date(start.getTime() + 3600000));
+      }
+    },
+
+    eventClick(info) {
+      pendingDel = info.event;
+      const parts = info.event.title.split('\n');
+      $('m-t').textContent = parts[0];
+      $('m-d').textContent = parts[1] || (info.event.extendedProps?.isPause ? 'Supprimer cette pause ?' : 'Supprimer cet événement ?');
+      $('mbg').classList.add('on');
+    },
+
+    eventContent(arg) {
+      // FIX 2 : Ajout de la poignée .ev-lhandle à gauche
+      const parts = arg.event.title.split('\n');
+      if (arg.event.extendedProps?.isPause) {
+        return { html: `<div class="ev-pause" style="position:relative;height:100%"><span>⏸ PAUSE</span><div class="ev-lhandle"></div><div class="ev-hhandle"></div></div>` };
+      }
+      return { html: `<div class="ev"><div class="ev-lhandle"></div><div class="ev-t">${parts[0]||''}</div>${parts[1]?`<div class="ev-s">${parts[1]}</div>`:''}<div class="ev-hhandle"></div></div>` };
+    },
+
+    eventDidMount: info => setupHResize(info.event, info.el),
+
+    datesSet(info) {
+      const s = info.start;
+      const e = new Date(info.end); e.setDate(e.getDate()-1);
+      const f = d => d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+      $('wlabel').textContent = `${f(s)} — ${f(e)}`;
+    }
+  });
+
+  calendar.render();
+
+  // ── HORIZONTAL RESIZE BI-DIRECTIONNEL (ET COMPATIBLE TACTILE) ──
+  function getColumnRects() {
+    return Array.from(document.querySelectorAll('#calendar .fc-timegrid-col[data-date]')).map(col => {
+      const r = col.getBoundingClientRect();
+      return { left: r.left, right: r.right, width: r.width, date: col.getAttribute('data-date') };
+    });
+  }
+
+  function setupHResize(fcEvent, el) {
+    const tryAttach = () => {
+      const rightHandle = el.querySelector('.ev-hhandle');
+      const leftHandle  = el.querySelector('.ev-lhandle');
+
+      if (!rightHandle && !leftHandle) { requestAnimationFrame(tryAttach); return; }
+
+      function startDrag(e, isLeft) {
+        const isTouch = e.type === 'touchstart';
+        if (!isTouch) e.preventDefault();
+        e.stopPropagation();
+
+        const currentEvent = calendar.getEventById(fcEvent.id) || fcEvent;
+        const elRect    = el.getBoundingClientRect();
+        const origStart = new Date(currentEvent.start);
+        const origEnd   = currentEvent.end ? new Date(currentEvent.end) : new Date(origStart.getTime()+3600000);
+        const durationMs = origEnd - origStart;
+        const color = currentEvent.backgroundColor || '#dc2626';
+        const ghost = $('h-ghost');
+
+        ghost.style.cssText = `display:block;background:${color};opacity:.3;border-radius:6px;top:${elRect.top}px;height:${elRect.height}px;position:fixed;z-index:999;pointer-events:none;`;
+        ghost.style.left = elRect.left + 'px';
+        ghost.style.width = elRect.width + 'px';
+
+        let finalStart = origStart;
+        let finalEnd = origStart;
+
+        function onMove(ev) {
+          if (isTouch && ev.cancelable) ev.preventDefault(); // Stoppe le scroll de la page
+          const mx = isTouch ? ev.touches[0].clientX : ev.clientX;
+          const colRects = getColumnRects();
+          if (!colRects.length) return;
+
+          let tCol = null;
+          for (const c of colRects) {
+            if (mx >= c.left && mx <= c.right) { tCol = c; break; }
+          }
+          if (!tCol) {
+            if (mx < colRects[0].left) tCol = colRects[0];
+            else if (mx > colRects[colRects.length-1].right) tCol = colRects[colRects.length-1];
+          }
+          if (!tCol) return;
+
+          const startIdx = colRects.findIndex(c => c.date === origStart.toISOString().slice(0,10));
+          if (startIdx === -1) return;
+          const tIdx = colRects.indexOf(tCol);
+
+          if (isLeft) {
+            // Étirement à gauche
+            let validIdx = Math.min(tIdx, startIdx);
+            let validCol = colRects[validIdx];
+            finalStart = new Date(validCol.date + 'T' + origStart.toTimeString().slice(0,8));
+            finalEnd = origStart;
+
+            ghost.style.left = validCol.left + 'px';
+            ghost.style.width = (elRect.right - validCol.left) + 'px';
+          } else {
+            // Étirement à droite
+            let validIdx = Math.max(tIdx, startIdx);
+            let validCol = colRects[validIdx];
+            finalStart = origStart;
+            finalEnd = new Date(validCol.date + 'T' + origStart.toTimeString().slice(0,8));
+
+            ghost.style.left = elRect.left + 'px';
+            ghost.style.width = (validCol.right - elRect.left) + 'px';
+          }
+        }
+
+        function onUp(ev) {
+          if (isTouch) {
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+          } else {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+          }
+          ghost.style.display = 'none';
+
+          if (finalStart.getTime() === origStart.getTime() && finalEnd.getTime() === origStart.getTime()) {
+            return;
+          }
+
+          const title = currentEvent.title, props = {...currentEvent.extendedProps};
+          const startDateStr = finalStart.toISOString().slice(0,10);
+          const endDateStr   = finalEnd.toISOString().slice(0,10);
+          const startTime    = origStart.toTimeString().slice(0,8);
+
+          const cols = getColumnRects().filter(c => c.date >= startDateStr && c.date <= endDateStr);
+          if (!cols.length) return;
+
+          currentEvent.remove();
+          cols.forEach(col => {
+            const ds = new Date(col.date + 'T' + startTime);
+            calendar.addEvent({
+              id: uid(),
+              title,
+              start: ds,
+              end: new Date(ds.getTime() + durationMs),
+              backgroundColor: color,
+              borderColor: color,
+              extendedProps: {...props, isClone: true}
+            });
+          });
+        }
+
+        if (isTouch) {
+          document.addEventListener('touchmove', onMove, { passive: false });
+          document.addEventListener('touchend', onUp);
+        } else {
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        }
+      }
+
+      if (rightHandle) {
+        rightHandle.addEventListener('mousedown', e => startDrag(e, false));
+        rightHandle.addEventListener('touchstart', e => startDrag(e, false), { passive: false });
+      }
+      if (leftHandle) {
+        leftHandle.addEventListener('mousedown', e => startDrag(e, true));
+        leftHandle.addEventListener('touchstart', e => startDrag(e, true), { passive: false });
+      }
+    };
+    requestAnimationFrame(tryAttach);
+  }
+
+  // ── NAV ──
+  $('btn-prev').addEventListener('click', () => calendar.prev());
+  $('btn-next').addEventListener('click', () => calendar.next());
+  $('winput').addEventListener('change', e => { if (e.target.value) calendar.gotoDate(e.target.value); });
+  $('winput').value = new Date().toISOString().split('T')[0];
+
+  // ── BOUTONS VUE ──
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      calendar.changeView(btn.dataset.view);
+    });
+  });
+
+  // ── RESPONSIVE ──
+  function openSidebar()  { $('sb').classList.add('open'); $('sb-overlay').classList.add('on'); document.body.style.overflow = 'hidden'; }
+  function closeSidebar() { $('sb').classList.remove('open'); $('sb-overlay').classList.remove('on'); document.body.style.overflow = ''; }
+  $('btn-menu').addEventListener('click', openSidebar);
+  $('btn-sb-close').addEventListener('click', closeSidebar);
+  $('sb-overlay').addEventListener('click', closeSidebar);
+
+  function adaptView() {
+    const w = window.innerWidth, cv = calendar.view.type;
+    if (w <= 400 && cv !== 'timeGridDay') calendar.changeView('timeGridDay');
+    else if (w > 400 && w <= 640 && cv !== 'timeGridThreeDay') {
+      try { calendar.changeView('timeGridThreeDay'); } catch { calendar.changeView('timeGridWeek'); }
+    } else if (w > 640 && cv !== 'timeGridWeek') calendar.changeView('timeGridWeek');
+    calendar.updateSize();
+  }
+  window.addEventListener('resize', () => { clearTimeout(window._rt); window._rt = setTimeout(adaptView, 180); });
+  setTimeout(adaptView, 100);
+
+  // ── VIDER EDT — modale dédiée ──
+  $('btn-clear').addEventListener('click', () => $('clear-bg').classList.add('on'));
+  $('clear-cancel').addEventListener('click', () => $('clear-bg').classList.remove('on'));
+  $('clear-confirm').addEventListener('click', () => {
+    calendar.getEvents().forEach(e => e.remove());
+    $('clear-bg').classList.remove('on');
+    toast('Emploi du temps vidé');
+  });
+  $('clear-bg').addEventListener('click', e => { if (e.target === $('clear-bg')) $('clear-bg').classList.remove('on'); });
+
+  // ── MODAL SUPPRESSION ──
+  $('m-cancel').addEventListener('click', () => { $('mbg').classList.remove('on'); pendingDel = null; });
+  $('m-confirm').addEventListener('click', () => { if (pendingDel) pendingDel.remove(); $('mbg').classList.remove('on'); pendingDel = null; });
+  $('mbg').addEventListener('click', e => { if (e.target === $('mbg')) { $('mbg').classList.remove('on'); pendingDel = null; } });
+
+  // ── INIT ──
+  buildTeacherChips(); buildSubjectChips();
+  buildMobTeacherChips(); buildMobSubjectChips();
+  initFCDrag(); renderCards(); updateEvPreview(); updateMobEvPreview();
+});
+</script>
+</body>
+</html>

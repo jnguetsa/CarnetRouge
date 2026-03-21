@@ -1,16 +1,10 @@
 package CarnetRouge.CarnetRouge.GDU.DTO.Response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-import java.util.Date;
-import java.util.Set;
+@Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
+public class EnseignantRequestDTO {
 
-@Getter
-@Setter
-@Builder
-public class EnseignantResponseDTO {
     private Long id;
     private String nom;
     private String prenom;

@@ -1,22 +1,22 @@
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+
 @Entity
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter @Setter
+@Builder
+@AllArgsConstructor @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class UE {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,28 +29,26 @@ public class UE {
 
     @CreatedDate
     @Column(updatable = false, nullable = false)
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
-    private LocalDateTime updateAt;
+    private LocalDateTime updatedAt;
 
-    @ManyToMany
-    @JoinTable(
-            name = "ue_plage_horaire",
-            joinColumns = @JoinColumn(name = "ue_id"),
-            inverseJoinColumns = @JoinColumn(name = "plage_horaire_id")
-    )
+    // "Un cours apparaît dans plusieurs séances"
+    @OneToMany(mappedBy = "ue")
     private Collection<PlageHoraire> plagesHoraires = new ArrayList<>();
 
+    // "Un cours peut être enseigné par plusieurs enseignants"
     @ManyToMany
     @JoinTable(
             name = "ue_enseignant",
             joinColumns = @JoinColumn(name = "ue_id"),
             inverseJoinColumns = @JoinColumn(name = "enseignant_id")
     )
+    @Builder.Default
     private Collection<Enseignant> enseignants = new ArrayList<>();
 
+    // "Un cours est suivi par plusieurs classes"
     @ManyToMany(mappedBy = "ue")
     private Collection<Classes> classes = new ArrayList<>();
 }
-

@@ -2,7 +2,11 @@ package CarnetRouge.CarnetRouge;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableJpaAuditing // ✅ indispensable
+@EnableScheduling
 @SpringBootApplication
 public class CarnetRougeApplication {
 	public static void main(String[] args) {
