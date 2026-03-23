@@ -3,7 +3,7 @@ package CarnetRouge.CarnetRouge.GDU.Controller;
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.UERequestDTO;
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.UEResponse;
-import CarnetRouge.CarnetRouge.GDU.Entity.UE;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
 import CarnetRouge.CarnetRouge.GDU.Mappers.UEMapper;
 import CarnetRouge.CarnetRouge.GDU.Repository.UERepository;
 import jakarta.validation.Valid;

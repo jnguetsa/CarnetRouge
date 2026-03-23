@@ -3,7 +3,7 @@ package CarnetRouge.CarnetRouge.GDU.Controller;
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.SpecialiteRequest;
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.SpecialiteResponse;
-import CarnetRouge.CarnetRouge.GDU.Entity.Specialite;
+import CarnetRouge.CarnetRouge.GDAE.Entity.Specialite;
 import CarnetRouge.CarnetRouge.GDU.Exception.UserNotFoundException;
 import CarnetRouge.CarnetRouge.GDU.Mappers.SpecialiteMapper;
 import CarnetRouge.CarnetRouge.GDU.Repository.SpecialiteRepository;
