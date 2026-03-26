@@ -1,4 +1,4 @@
-package CarnetRouge.CarnetRouge.GDU.Controller;
+package CarnetRouge.CarnetRouge.GDET.Controller;
 
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.UERequestDTO;

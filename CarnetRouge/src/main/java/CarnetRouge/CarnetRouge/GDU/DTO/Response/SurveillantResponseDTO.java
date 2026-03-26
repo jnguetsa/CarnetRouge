@@ -1,6 +1,5 @@
-package CarnetRouge.CarnetRouge.GDU.DTO;
+package CarnetRouge.CarnetRouge.GDU.DTO.Response;
 
-import CarnetRouge.CarnetRouge.GDU.DTO.Response.RoleResponseDTO;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;

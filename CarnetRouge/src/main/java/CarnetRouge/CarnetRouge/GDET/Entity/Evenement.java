@@ -1,4 +1,4 @@
-package CarnetRouge.CarnetRouge.GDU.Entity;
+package CarnetRouge.CarnetRouge.GDET.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;

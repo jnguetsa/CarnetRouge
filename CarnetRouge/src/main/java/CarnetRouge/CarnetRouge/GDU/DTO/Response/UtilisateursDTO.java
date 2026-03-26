@@ -22,7 +22,10 @@ public class UtilisateursDTO {
     private Date dateNaissance;
     private boolean active;
     private String type;          // "ENS" ou "ASS"
-    private String grade;         // Enseignant seulement
+    private String grade;
+    private String secteur;
+    private String typeContrat;
+    // Enseignant seulement
     private String typeEnseignant;// Enseignant seulement
     private String fonction;      // Assistant seulement
     private Set<RoleResponseDTO> roles;

@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -25,5 +26,6 @@ public class AssistantResponseDetails {
     protected boolean active ;
     protected boolean firstLogin;
     protected LocalDateTime createdAt;
+    private List<ClassesResponseDTO> classes;
     private  Set<RoleResponseDTO> roles;
 }

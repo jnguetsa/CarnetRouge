@@ -1,6 +1,6 @@
 package CarnetRouge.CarnetRouge.GDU.Repository;
 
-import CarnetRouge.CarnetRouge.GDU.Entity.PlageHoraire;
+import CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

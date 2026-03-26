@@ -1,5 +1,6 @@
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
+import CarnetRouge.CarnetRouge.GDAE.Entity.Specialite;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

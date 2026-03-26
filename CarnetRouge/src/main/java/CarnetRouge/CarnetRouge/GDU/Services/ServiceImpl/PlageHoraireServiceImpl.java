@@ -2,10 +2,10 @@ package CarnetRouge.CarnetRouge.GDU.Services.ServiceImpl;
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.PlageHoraireRequest;
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.PlageHoraireResponse;
-import CarnetRouge.CarnetRouge.GDU.Entity.Classes;
+import CarnetRouge.CarnetRouge.GDET.Entity.Classes;
 import CarnetRouge.CarnetRouge.GDU.Entity.Enseignant;
-import CarnetRouge.CarnetRouge.GDU.Entity.PlageHoraire;
-import CarnetRouge.CarnetRouge.GDU.Entity.UE;
+import CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
 import CarnetRouge.CarnetRouge.GDU.Exception.UserNotFoundException;
 import CarnetRouge.CarnetRouge.GDU.Mappers.PlageHoraireMapper;
 import CarnetRouge.CarnetRouge.GDU.Repository.ClassesRepository;

@@ -2,7 +2,7 @@ package CarnetRouge.CarnetRouge.GDU.Mappers;
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.SpecialiteRequest;
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.SpecialiteResponse;
-import CarnetRouge.CarnetRouge.GDU.Entity.Specialite;
+import CarnetRouge.CarnetRouge.GDAE.Entity.Specialite;
 import org.mapstruct.*;
 
 import java.util.List;

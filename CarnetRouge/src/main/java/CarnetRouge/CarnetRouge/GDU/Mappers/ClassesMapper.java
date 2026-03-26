@@ -1,9 +1,9 @@
 package CarnetRouge.CarnetRouge.GDU.Mappers;
 
-
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.ClassesRequestDTO;
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.ClassesResponse;
-import CarnetRouge.CarnetRouge.GDU.Entity.Classes;
+import CarnetRouge.CarnetRouge.GDU.DTO.Response.ClassesResponseDTO;
+import CarnetRouge.CarnetRouge.GDET.Entity.Classes;
 import org.mapstruct.*;
 
 import java.util.List;
@@ -24,4 +24,12 @@ public interface ClassesMapper {
     @Mapping(target = "specialite",     ignore = true)
     @Mapping(target = "plagesHoraires", ignore = true)
     Classes toEntity(ClassesRequestDTO request);
+
+    // ✅ Méthode que MapStruct trouve automatiquement via uses = {ClassesMapper.class}
+    @Mapping(target = "id",  source = "id")
+    @Mapping(target = "nom", source = "nom")
+    ClassesResponseDTO map(Classes classes);
+
+    // ✅ Liste
+    List<ClassesResponseDTO> mapList(List<Classes> classes);
 }

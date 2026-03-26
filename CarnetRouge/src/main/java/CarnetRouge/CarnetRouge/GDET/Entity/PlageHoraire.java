@@ -1,5 +1,7 @@
-package CarnetRouge.CarnetRouge.GDU.Entity;
+package CarnetRouge.CarnetRouge.GDET.Entity;
 
+import CarnetRouge.CarnetRouge.GDU.Entity.Enseignant;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

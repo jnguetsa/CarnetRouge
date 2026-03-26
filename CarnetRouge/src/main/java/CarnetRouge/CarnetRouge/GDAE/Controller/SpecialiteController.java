@@ -1,4 +1,4 @@
-package CarnetRouge.CarnetRouge.GDU.Controller;
+package CarnetRouge.CarnetRouge.GDAE.Controller;
 
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Request.SpecialiteRequest;

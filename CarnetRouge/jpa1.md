@@ -119,6 +119,9 @@ Voici le modèle complet corrigé :
 ```java
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
+import CarnetRouge.CarnetRouge.GDET.Entity.Classes;
+import CarnetRouge.CarnetRouge.GDET.Entity.Evenement;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -132,7 +135,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class PlageHoraire {
@@ -154,27 +160,27 @@ public class PlageHoraire {
     // ✅ Une plage peut concerner plusieurs UE
     @ManyToMany
     @JoinTable(
-        name = "plage_horaire_ue",
-        joinColumns = @JoinColumn(name = "plage_horaire_id"),
-        inverseJoinColumns = @JoinColumn(name = "ue_id")
+            name = "plage_horaire_ue",
+            joinColumns = @JoinColumn(name = "plage_horaire_id"),
+            inverseJoinColumns = @JoinColumn(name = "ue_id")
     )
     private Collection<UE> ues = new ArrayList<>();
 
     // ✅ Une plage peut concerner plusieurs enseignants
     @ManyToMany
     @JoinTable(
-        name = "plage_horaire_enseignant",
-        joinColumns = @JoinColumn(name = "plage_horaire_id"),
-        inverseJoinColumns = @JoinColumn(name = "enseignant_id")
+            name = "plage_horaire_enseignant",
+            joinColumns = @JoinColumn(name = "plage_horaire_id"),
+            inverseJoinColumns = @JoinColumn(name = "enseignant_id")
     )
     private Collection<Enseignant> enseignants = new ArrayList<>();
 
     // ✅ Une plage peut concerner plusieurs classes
     @ManyToMany
     @JoinTable(
-        name = "plage_horaire_classe",
-        joinColumns = @JoinColumn(name = "plage_horaire_id"),
-        inverseJoinColumns = @JoinColumn(name = "classe_id")
+            name = "plage_horaire_classe",
+            joinColumns = @JoinColumn(name = "plage_horaire_id"),
+            inverseJoinColumns = @JoinColumn(name = "classe_id")
     )
     private Collection<Classes> classes = new ArrayList<>();
 
@@ -191,6 +197,7 @@ public class PlageHoraire {
 ```java
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
+import CarnetRouge.CarnetRouge.GDET.Entity.Classes;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -202,7 +209,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class UE {
@@ -225,14 +235,14 @@ public class UE {
 
     // ✅ Côté inverse de PlageHoraire
     @ManyToMany(mappedBy = "ues")
-    private Collection<PlageHoraire> plagesHoraires = new ArrayList<>();
+    private Collection<CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire> plagesHoraires = new ArrayList<>();
 
     // ✅ Côté propriétaire — une UE peut être enseignée par plusieurs enseignants
     @ManyToMany
     @JoinTable(
-        name = "ue_enseignant",
-        joinColumns = @JoinColumn(name = "ue_id"),
-        inverseJoinColumns = @JoinColumn(name = "enseignant_id")
+            name = "ue_enseignant",
+            joinColumns = @JoinColumn(name = "ue_id"),
+            inverseJoinColumns = @JoinColumn(name = "enseignant_id")
     )
     private Collection<Enseignant> enseignants = new ArrayList<>();
 
@@ -258,7 +268,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Evenement {
@@ -280,7 +293,7 @@ public class Evenement {
     // ✅ ManyToOne — plusieurs événements peuvent être dans la même plage
     @ManyToOne
     @JoinColumn(name = "plage_horaire_id")
-    private PlageHoraire plageHoraire;
+    private CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire plageHoraire;
 }
 ```
 
@@ -291,6 +304,8 @@ public class Evenement {
 ```java
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
+import CarnetRouge.CarnetRouge.GDAE.Entity.Specialite;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -302,7 +317,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Classes {
@@ -322,15 +340,15 @@ public class Classes {
     // ✅ Côté propriétaire
     @ManyToMany
     @JoinTable(
-        name = "classes_ue",
-        joinColumns = @JoinColumn(name = "classes_id"),
-        inverseJoinColumns = @JoinColumn(name = "ue_id")
+            name = "classes_ue",
+            joinColumns = @JoinColumn(name = "classes_id"),
+            inverseJoinColumns = @JoinColumn(name = "ue_id")
     )
     private Collection<UE> ue = new ArrayList<>();
 
     // ✅ Côté inverse de PlageHoraire
     @ManyToMany(mappedBy = "classes")
-    private Collection<PlageHoraire> plagesHoraires = new ArrayList<>();
+    private Collection<CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire> plagesHoraires = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "specialite_id")

@@ -1,12 +1,12 @@
 package CarnetRouge.CarnetRouge.GDU.Entity;
 
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 
 @Getter

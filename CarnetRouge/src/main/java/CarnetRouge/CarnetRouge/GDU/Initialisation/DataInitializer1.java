@@ -1,5 +1,9 @@
 package CarnetRouge.CarnetRouge.GDU.Initialisation;
 
+import CarnetRouge.CarnetRouge.GDAE.Entity.Specialite;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
+import CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire;
+import CarnetRouge.CarnetRouge.GDET.Entity.Classes;
 import CarnetRouge.CarnetRouge.GDU.Entity.*;
 import CarnetRouge.CarnetRouge.GDU.Repository.*;
 import lombok.RequiredArgsConstructor;

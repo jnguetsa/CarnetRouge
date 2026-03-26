@@ -1,6 +1,6 @@
 package CarnetRouge.CarnetRouge.GDU.Repository;
 
-import CarnetRouge.CarnetRouge.GDU.Entity.UE;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

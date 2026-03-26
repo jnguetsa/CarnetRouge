@@ -12,10 +12,11 @@ import java.util.Optional;
 @Repository
 public interface UtilisateurRepository extends JpaRepository<Utilisateurs, Long> {
 
-    @Query("SELECT u FROM Utilisateurs u WHERE TYPE(u) IN (Enseignant, Assistant) " +
+    @Query("SELECT u FROM Utilisateurs u WHERE TYPE(u) IN (Enseignant, Assistant, Surveillant) " +
             "AND (:type = 'TOUS' OR " +
             "    (:type = 'ENS' AND TYPE(u) = Enseignant) OR " +
-            "    (:type = 'ASS' AND TYPE(u) = Assistant)) " +
+            "    (:type = 'ASS' AND TYPE(u) = Assistant) OR " +
+            "    (:type = 'SUR' AND TYPE(u) = Surveillant)) " +
             "AND (:recherche IS NULL OR :recherche = '' OR " +
             "    LOWER(u.nom) LIKE LOWER(CONCAT('%', :recherche, '%')) OR " +
             "    LOWER(u.prenom) LIKE LOWER(CONCAT('%', :recherche, '%')))")

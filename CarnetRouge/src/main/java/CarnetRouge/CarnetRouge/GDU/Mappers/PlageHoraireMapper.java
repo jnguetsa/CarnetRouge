@@ -1,7 +1,7 @@
 package CarnetRouge.CarnetRouge.GDU.Mappers;
 
 import CarnetRouge.CarnetRouge.GDU.DTO.Response.PlageHoraireResponse;
-import CarnetRouge.CarnetRouge.GDU.Entity.PlageHoraire;
+import CarnetRouge.CarnetRouge.GDET.Entity.PlageHoraire;
 import org.mapstruct.*;
 
 import java.util.List;

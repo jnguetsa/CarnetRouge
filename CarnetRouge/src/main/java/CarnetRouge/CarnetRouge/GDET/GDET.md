@@ -1,0 +1,88 @@
+
+---
+> 1- Le mot de passe est géenere par le systeme, pour les classes.
+> 2- Les classes sont liées aux UES 
+> 3- C'est l'assistant pedagogique qui cree les emplois de temps des classes dont il a la responsabilité.
+> 4- Le Surveillant aura certains plusieurs comme celui d'enseignant avec des permissions specifique
+
+````yaml
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    session:
+      cookie:
+        name: JSESSIONID
+        http-only: true
+        secure: false  # Mettre à true en production avec HTTPS
+        path: /
+        max-age: 3600  # 1 heure en secondes
+
+spring:
+  mvc:
+    contentnegotiation:
+      favor-parameter: false
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, classpath:/public/
+  application:
+    name: CarnetRouge
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: juniornoumedem02@gmail.com
+    password: zhlnxiziflgkjgfy    # Ton "Mot de passe d'application" Google
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/CarnetRouge
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    servlet:
+      content-type: text/html
+
+  session:
+    store-type: none
+
+# ✅ JWT correct
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 3600000
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.thymeleaf: DEBUG          # ou TRACE pour encore plus de détails
+    org.thymeleaf.spring6: DEBUG  # selon ta version de Spring Boot (6+)
+
+mailtrap:
+  token: ${f6da54d4e4f0540749acb1e0b6bca5f7}
+
+````

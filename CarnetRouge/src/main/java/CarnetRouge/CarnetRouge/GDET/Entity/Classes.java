@@ -1,5 +1,8 @@
-package CarnetRouge.CarnetRouge.GDU.Entity;
+package CarnetRouge.CarnetRouge.GDET.Entity;
 
+import CarnetRouge.CarnetRouge.GDAE.Entity.Specialite;
+import CarnetRouge.CarnetRouge.GDAE.Entity.UE;
+import CarnetRouge.CarnetRouge.GDU.Entity.Assistant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -11,7 +14,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Classes {
@@ -41,10 +47,15 @@ public class Classes {
             joinColumns = @JoinColumn(name = "classes_id"),
             inverseJoinColumns = @JoinColumn(name = "ue_id")
     )
+    @Builder.Default
     private Collection<UE> ue = new ArrayList<>();
 
     // "Une classe appartient à une seule spécialité"
     @ManyToOne
     @JoinColumn(name = "specialite_id")
     private Specialite specialite;
+
+    // ✅ Assistants responsables de cette classe
+    @ManyToMany(mappedBy = "classes")
+    private Collection<Assistant> assistants = new ArrayList<>();
 }
